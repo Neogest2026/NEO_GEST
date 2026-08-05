@@ -11,6 +11,8 @@ from pydantic import BaseModel
 from passlib.context import CryptContext
 from app.routes import auth_routes
 from app.routes import cliente_routes
+from app.routes import catalogo_routes
+from app.routes import carrito_routes
 
 # ==============================
 # CREACIÓN DE LA APLICACIÓN
@@ -40,6 +42,8 @@ app.add_middleware(
 
 app.include_router(auth_routes.router)
 app.include_router(cliente_routes.router)
+app.include_router(catalogo_routes.router)
+app.include_router(carrito_routes.router)
 
 
 @app.get("/")

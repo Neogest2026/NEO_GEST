@@ -54,9 +54,9 @@ const Login = ({ onLoginSuccess, onBack, isAdminLogin }) => {
 
         if (response.ok) {
             if (data.rol === 1) {
-                onLoginSuccess("admin")
+                onLoginSuccess({ role: "admin", userId: data.idUsuario })
             } else {
-                onLoginSuccess("cliente")
+                onLoginSuccess({ role: "cliente", userId: data.idUsuario })
             }
         } else {
             alert(data.detail || "Error en login")
@@ -134,8 +134,8 @@ const Login = ({ onLoginSuccess, onBack, isAdminLogin }) => {
                     <p style={{ fontWeight: 600, marginBottom: '0.25rem' }}>
                         Credenciales de prueba:
                     </p>
-                    <p>Admin: admin@neogest.com / admin</p>
-                    <p>Cliente: cliente@neogest.com / cliente</p>
+                    <p>Admin: admin@neogest.com / admin123</p>
+                    <p>Cliente: usa un usuario registrado en la base de datos</p>
                 </div>
                 {/* LINK REGISTRO */}
                 <p className="auth-footer-text">

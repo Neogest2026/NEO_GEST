@@ -1,0 +1,20 @@
+# Dependencias y artefactos generados
+node_modules/
+dist/
+.vite/
+
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+
+# Sistema operativo y archivos temporales de Office
+.DS_Store
+Thumbs.db
+~$*
+
+# Configuración local y secretos
+.env
+.env.*
+!.env.example

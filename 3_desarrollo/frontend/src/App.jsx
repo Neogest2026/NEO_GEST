@@ -1,175 +1,109 @@
-// Importación de hooks de React
-import React, { useState, useEffect } from 'react'
-// Importación de componentes principales de la aplicación
+import React, { useEffect, useState } from 'react'
 import { Navbar, Hero, Catalog, Login, Dashboard, RegisterModal } from './components'
-// Importación de componentes del módulo de comercio
 import { Footer, CartDrawer } from './components/Commerce'
-/*
-========================================================
-COMPONENTE PRINCIPAL DE LA APLICACIÓN
-========================================================
-Este componente controla toda la navegación interna
-del sistema NeoGest.
-Gestiona las vistas:
-home → página principal de la tienda
-login → inicio de sesión de clientes
-admin-login → inicio de sesión administrativo
-admin → panel de administración
-También controla:
-- Carrito de compras
-- Búsqueda de productos
-- Registro de usuarios
-*/
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
+
 function App() {
-    /*
-    ========================================================
-    FUNCIÓN PARA DEFINIR LA VISTA INICIAL
-    ========================================================
-    Permite abrir directamente el login de administrador
-    usando la URL:
-    http://localhost:5173/#admin
-    */
-    const getInitialView = () => {
-        if (window.location.hash === '#admin') return 'admin-login'
-        return 'home'
-    }
-    /*
-    ========================================================
-    ESTADOS PRINCIPALES DE LA APLICACIÓN
-    ========================================================
-    */
-    // Vista actual de la aplicación
-    const [view, setView] = useState(getInitialView())
-    // Controla si el modal de registro está abierto
+    const [view, setView] = useState(window.location.hash === '#admin' ? 'admin-login' : 'home')
     const [isRegisterOpen, setIsRegisterOpen] = useState(false)
-    // Controla si el carrito está abierto
     const [isCartOpen, setIsCartOpen] = useState(false)
-    // Texto de búsqueda de productos
     const [searchTerm, setSearchTerm] = useState('')
-    // Productos agregados al carrito
     const [cartItems, setCartItems] = useState([])
-    /*
-    ========================================================
-    LISTENER DE CAMBIO EN EL HASH DE LA URL
-    ========================================================
-    Permite cambiar entre vistas usando la URL.
-    */
+    const [currentUser, setCurrentUser] = useState(() => {
+        const savedUser = localStorage.getItem('neogest_user')
+        return savedUser ? JSON.parse(savedUser) : null
+    })
+
+    const loadCart = async (userId) => {
+        const response = await fetch(`${API_URL}/api/v1/carrito/${userId}`)
+        if (!response.ok) throw new Error('No fue posible cargar el carrito')
+        const data = await response.json()
+        setCartItems(data.items)
+    }
+
     useEffect(() => {
-        const handleHashChange = () => {
-            if (window.location.hash === '#admin') {
-                setView('admin-login')
-            } else if (window.location.hash === '') {
-                setView('home')
-            }
-        }
-        // Escucha cambios en la URL
+        const handleHashChange = () => setView(window.location.hash === '#admin' ? 'admin-login' : 'home')
         window.addEventListener('hashchange', handleHashChange)
-        // Limpia el evento cuando el componente se desmonta
         return () => window.removeEventListener('hashchange', handleHashChange)
     }, [])
-    /*
-    ========================================================
-    FUNCIÓN PARA AGREGAR PRODUCTOS AL CARRITO
-    ========================================================
-    */
-    const addToCart = (product) => {
-        // Agrega el producto al carrito
-        setCartItems([...cartItems, product])
-        // Abre automáticamente el carrito
+
+    useEffect(() => {
+        if (currentUser?.userId && currentUser.role === 'cliente') {
+            loadCart(currentUser.userId).catch((error) => console.error(error))
+        } else {
+            setCartItems([])
+        }
+    }, [currentUser])
+
+    const addToCart = async (product) => {
+        if (!currentUser || currentUser.role !== 'cliente') {
+            alert('Inicia sesión como cliente para agregar productos al carrito')
+            setView('login')
+            return
+        }
+        const response = await fetch(`${API_URL}/api/v1/carrito/items`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ usuario_id: currentUser.userId, producto_id: product.id, cantidad: 1 }),
+        })
+        const data = await response.json()
+        if (!response.ok) {
+            alert(data.detail || 'No fue posible agregar el producto')
+            return
+        }
+        setCartItems(data.items)
         setIsCartOpen(true)
     }
-    /*
-    ========================================================
-    FUNCIÓN PARA ELIMINAR PRODUCTOS DEL CARRITO
-    ========================================================
-    */
-    const removeCartItem = (index) => {
-        // Copia del carrito
-        const newCart = [...cartItems]
-        // Elimina el producto según su posición
-        newCart.splice(index, 1)
-        // Actualiza el carrito
-        setCartItems(newCart)
+
+    const removeCartItem = async (itemId) => {
+        const response = await fetch(`${API_URL}/api/v1/carrito/items/${itemId}?usuario_id=${currentUser.userId}`, { method: 'DELETE' })
+        if (!response.ok) return
+        await loadCart(currentUser.userId)
     }
-    /*
-    ========================================================
-    RENDER PRINCIPAL DE LA APLICACIÓN
-    ========================================================
-    */
+
+    const updateCartItemQuantity = async (item, quantity) => {
+        if (quantity < 1) return removeCartItem(item.id)
+        const response = await fetch(`${API_URL}/api/v1/carrito/items/${item.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ usuario_id: currentUser.userId, cantidad: quantity }),
+        })
+        const data = await response.json()
+        if (!response.ok) {
+            alert(data.detail || 'No fue posible actualizar el carrito')
+            return
+        }
+        setCartItems(data.items)
+    }
+
+    const handleLogin = (user) => {
+        setCurrentUser(user)
+        localStorage.setItem('neogest_user', JSON.stringify(user))
+        setView(user.role === 'admin' ? 'admin' : 'home')
+    }
+
+    const logout = () => {
+        setCurrentUser(null)
+        localStorage.removeItem('neogest_user')
+        window.location.hash = ''
+        setView('home')
+    }
+
     return (
         <div className="app-container">
-            {/* ====================================================
-               VISTA PRINCIPAL (TIENDA)
-            ==================================================== */}
-            {view === 'home' && (
-                <>
-                    {/* BARRA DE NAVEGACIÓN */}
-                    <Navbar
-                        // Ir al login
-                        onLoginClick={() => setView('login')}
-                        // Abrir registro
-                        onRegisterClick={() => setIsRegisterOpen(true)}
-                        // Buscar productos
-                        onSearch={setSearchTerm}
-                        // Cantidad de productos en carrito
-                        cartItemsCount={cartItems.length}
-                        // Abrir carrito
-                        onCartClick={() => setIsCartOpen(true)}
-                    />
-                    {/* SECCIÓN HERO (PORTADA) */}
-                    <Hero />
-                    {/* CATÁLOGO DE PRODUCTOS */}
-                    <Catalog
-                        searchTerm={searchTerm}
-                        addToCart={addToCart}
-                    />
-                    {/* PIE DE PÁGINA */}
-                    <Footer />
-                    {/* MODAL DE REGISTRO */}
-                    {isRegisterOpen && (
-                        <RegisterModal
-                            onClose={() => setIsRegisterOpen(false)}
-                        />
-                    )}
-                    {/* CARRITO DE COMPRAS */}
-                    <CartDrawer
-                        isOpen={isCartOpen}
-                        onClose={() => setIsCartOpen(false)}
-                        items={cartItems}
-                        onRemove={removeCartItem}
-                    />
-                </>
-            )}
-            {/* ====================================================
-               VISTA LOGIN
-            ==================================================== */}
-            {(view === 'login' || view === 'admin-login') && (
-                <Login
-                    // Si el login es exitoso
-                    onLoginSuccess={(role) =>
-                        setView(role === 'admin' ? 'admin' : 'home')
-                    }
-                    // Volver a la tienda
-                    onBack={() => setView('home')}
-                    // Determina si es login admin
-                    isAdminLogin={view === 'admin-login'}
-                />
-            )}
-            {/* ====================================================
-               PANEL ADMINISTRADOR
-            ==================================================== */}
-            {view === 'admin' && (
-                <Dashboard
-                    onLogout={() => {
-                        // Elimina hash de admin
-                        window.location.hash = ''
-                        // Regresa a la tienda
-                        setView('home')
-                    }}
-                />
-            )}
+            {view === 'home' && <>
+                <Navbar onLoginClick={() => setView('login')} onRegisterClick={() => setIsRegisterOpen(true)} onSearch={setSearchTerm} cartItemsCount={cartItems.reduce((total, item) => total + item.cantidad, 0)} onCartClick={() => setIsCartOpen(true)} />
+                <Hero />
+                <Catalog searchTerm={searchTerm} addToCart={addToCart} />
+                <Footer />
+                {isRegisterOpen && <RegisterModal onClose={() => setIsRegisterOpen(false)} />}
+                <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} items={cartItems} onRemove={removeCartItem} onUpdateQuantity={updateCartItemQuantity} />
+            </>}
+            {(view === 'login' || view === 'admin-login') && <Login onLoginSuccess={handleLogin} onBack={() => setView('home')} isAdminLogin={view === 'admin-login'} />}
+            {view === 'admin' && <Dashboard onLogout={logout} />}
         </div>
     )
 }
-// Exportación del componente principal
+
 export default App

@@ -42,25 +42,30 @@ export const Footer = () => (
         </div>
     </footer>
 )
-export const CartDrawer = ({ isOpen, onClose, items, onRemove }) => {
-    const total = items.reduce((acc, item) => acc + item.price, 0)
+export const CartDrawer = ({ isOpen, onClose, items, onRemove, onUpdateQuantity }) => {
+    const total = items.reduce((acc, item) => acc + item.producto.precio_unitario * item.cantidad, 0)
     const formatPrice = (price) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(price)
     return (
         <>
             <div className={`cart-backdrop ${isOpen ? 'open' : ''}`} onClick={onClose}></div>
             <div className={`cart-drawer ${isOpen ? 'open' : ''}`} style={{ padding: '2rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-                    <h2 style={{ fontSize: '1.5rem' }}>Tu Carrito ({items.length})</h2>
+                    <h2 style={{ fontSize: '1.5rem' }}>Tu Carrito ({items.reduce((totalItems, item) => totalItems + item.cantidad, 0)})</h2>
                     <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer' }}>✕</button>
                 </div>
                 <div style={{ flex: 1, overflowY: 'auto' }}>
-                    {items.map((item, idx) => (
-                        <div key={idx} style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid #f1f5f9' }}>
-                            <img src={item.img} style={{ width: '80px', height: '80px', borderRadius: '0.5rem', objectFit: 'cover' }} />
+                    {items.map((item) => (
+                        <div key={item.id} style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid #f1f5f9' }}>
+                            <img src={item.producto.imagen_url || '/images/hero.png'} alt={item.producto.nombre} style={{ width: '80px', height: '80px', borderRadius: '0.5rem', objectFit: 'cover' }} />
                             <div style={{ flex: 1 }}>
-                                <h4 style={{ fontSize: '0.9rem' }}>{item.title}</h4>
-                                <p style={{ fontWeight: 'bold' }}>{formatPrice(item.price)}</p>
-                                <button onClick={() => onRemove(idx)} style={{ color: '#ef4444', border: 'none', background: 'none', fontSize: '0.8rem', cursor: 'pointer', marginTop: '0.5rem' }}>Eliminar</button>
+                                <h4 style={{ fontSize: '0.9rem' }}>{item.producto.nombre}</h4>
+                                <p style={{ fontWeight: 'bold' }}>{formatPrice(item.producto.precio_unitario)}</p>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <button onClick={() => onUpdateQuantity(item, item.cantidad - 1)} disabled={item.cantidad === 1}>−</button>
+                                    <span>{item.cantidad}</span>
+                                    <button onClick={() => onUpdateQuantity(item, item.cantidad + 1)} disabled={item.cantidad >= item.producto.stock_actual}>+</button>
+                                    <button onClick={() => onRemove(item.id)} style={{ color: '#ef4444', border: 'none', background: 'none', fontSize: '0.8rem', cursor: 'pointer', marginLeft: '0.5rem' }}>Eliminar</button>
+                                </div>
                             </div>
                         </div>
                     ))}
