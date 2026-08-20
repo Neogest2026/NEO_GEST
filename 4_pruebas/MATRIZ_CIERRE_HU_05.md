@@ -24,6 +24,7 @@ OK: HU-05 pago aprobado, factura y validaciones verificadas
 | Criterio | Estado | Evidencia tecnica | Captura sugerida |
 | --- | --- | --- | --- |
 | Registrar un pago vinculado a `id_pedido` | Implementado | `POST /api/v1/pagos` crea registro en `pago.Pedido_idPedido` | Swagger con respuesta del pago |
+| Abrir pago despues del checkout | Implementado | Frontend abre el modal de pago al crear el pedido | Modal de pago visible despues de confirmar carrito |
 | Usar el total real del pedido como monto | Implementado | Backend asigna `monto = pedido.total_compra` | Respuesta API comparando monto y total |
 | Cambiar pedido a `Pagado` si el pago es aprobado | Implementado | `test_hu_05.ps1` valida `pedido_estado = Pagado` | Panel de pedidos con badge `Pagado` |
 | Generar factura con `ruc_nit_cliente` | Implementado | Pago aprobado crea registro en `factura` | Comprobante con numero de factura y RUC/NIT |
@@ -61,6 +62,15 @@ OK: HU-05 pago aprobado, factura y validaciones verificadas
 7. Swagger de `POST /api/v1/pagos`.
 8. Consulta SQL de registros en `pago`.
 9. Consulta SQL de registros en `factura`.
+
+## Restaurar stock demo
+
+Si las pruebas o capturas agotan productos del catalogo, restaurar cantidades demo con:
+
+```powershell
+cd C:\Users\jebus\OneDrive\Documentos\NEO_GEST
+powershell -ExecutionPolicy Bypass -File 4_pruebas\pruebas\reset_stock_demo.ps1
+```
 
 ## Estado para avanzar
 

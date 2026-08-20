@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
 const formatPrice = (price) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(price || 0)
 
@@ -77,9 +77,9 @@ export const CartDrawer = ({ isOpen, onClose, items, onRemove, onUpdateQuantity,
                             <span style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>Total</span>
                             <span style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--primary-dark)' }}>{formatPrice(total)}</span>
                         </div>
-                        <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '1.5rem' }}>El checkout genera un pedido en estado Pendiente.</p>
+                        <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '1.5rem' }}>Se creara el pedido y se abrira el formulario de pago.</p>
                         <button onClick={onCheckout} disabled={isCheckingOut} className="btn btn-primary" style={{ width: '100%', padding: '1.25rem' }}>
-                            {isCheckingOut ? 'Confirmando pedido...' : 'Pagar Ahora (Checkout)'}
+                            {isCheckingOut ? 'Confirmando pedido...' : 'Confirmar pedido y pagar'}
                         </button>
                     </div>
                 )}
@@ -147,6 +147,7 @@ const PaymentModal = ({ order, onClose, onSubmit, isPaying }) => {
                             type="text"
                             value={form.ruc_nit_cliente}
                             onChange={(event) => updateField('ruc_nit_cliente', event.target.value)}
+                            placeholder="900123456-7"
                             maxLength={45}
                             required
                         />
@@ -195,8 +196,19 @@ const PaymentReceipt = ({ payment }) => {
     )
 }
 
-export const OrdersPanel = ({ lastOrder, orders, onPayOrder, onViewPayment, isPaying, paymentResult }) => {
+export const OrdersPanel = ({ lastOrder, orders, onPayOrder, onViewPayment, isPaying, paymentResult, paymentPromptOrder, onPaymentPromptClose }) => {
     const [paymentOrder, setPaymentOrder] = useState(null)
+
+    useEffect(() => {
+        if (paymentPromptOrder) {
+            setPaymentOrder(paymentPromptOrder)
+        }
+    }, [paymentPromptOrder])
+
+    const closePaymentModal = () => {
+        setPaymentOrder(null)
+        if (onPaymentPromptClose) onPaymentPromptClose()
+    }
 
     if (!lastOrder && orders.length === 0) return null
 
@@ -268,7 +280,7 @@ export const OrdersPanel = ({ lastOrder, orders, onPayOrder, onViewPayment, isPa
             {paymentOrder && (
                 <PaymentModal
                     order={paymentOrder}
-                    onClose={() => setPaymentOrder(null)}
+                    onClose={closePaymentModal}
                     onSubmit={onPayOrder}
                     isPaying={isPaying}
                 />

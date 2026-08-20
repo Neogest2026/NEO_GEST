@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react'
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
 const formatPrice = (price) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(price)
 
-const Catalog = ({ searchTerm, addToCart }) => {
+const Catalog = ({ searchTerm, addToCart, reloadKey = 0 }) => {
     const [products, setProducts] = useState([])
     const [categories, setCategories] = useState([])
     const [categoryId, setCategoryId] = useState('')
@@ -32,7 +32,7 @@ const Catalog = ({ searchTerm, addToCart }) => {
             .then(setProducts)
             .catch((loadError) => setError(loadError.message))
             .finally(() => setLoading(false))
-    }, [searchTerm, categoryId])
+    }, [searchTerm, categoryId, reloadKey])
 
     const openProductDetail = async (productId) => {
         setDetailLoading(true)

@@ -112,6 +112,15 @@ Get-Content .\3_desarrollo\seed_catalogo_demo.sql | & "C:\Program Files\MySQL\My
 
 La base local quedo con 6 categorias y 8 productos demo.
 
+Para restaurar el stock demo cuando las pruebas o capturas agoten productos:
+
+```powershell
+cd C:\Users\jebus\OneDrive\Documentos\NEO_GEST
+powershell -ExecutionPolicy Bypass -File 4_pruebas\pruebas\reset_stock_demo.ps1
+```
+
+Ese comando vuelve a ejecutar `3_desarrollo/seed_catalogo_demo.sql`, por lo que restaura las cantidades demo de `producto.stock_actual`.
+
 ### 4.2. Ejecutar backend
 
 En una terminal:
@@ -311,7 +320,7 @@ Reglas implementadas:
 - Si el item ya existe en el carrito, se suma la cantidad.
 - Si la cantidad baja de `1`, el frontend elimina el item.
 
-El boton `Pagar Ahora (Checkout)` confirma el carrito contra `POST /api/v1/carrito/checkout`.
+El boton `Confirmar pedido y pagar` confirma el carrito contra `POST /api/v1/carrito/checkout`.
 
 Al confirmar:
 
@@ -321,11 +330,11 @@ Al confirmar:
 - Se descuenta `stock_actual`.
 - Se eliminan los items del carrito.
 
-Despues del checkout, el pedido queda disponible para pago desde el panel de pedidos recientes.
+Despues del checkout, el frontend cierra el carrito, refresca el stock del catalogo y abre automaticamente el modal de pago del pedido creado.
 
 ### 6.5. Pago y facturacion
 
-El pago se ejecuta desde la tabla `Mis pedidos recientes` para pedidos en estado `Pendiente`.
+El pago se abre automaticamente despues del checkout. Tambien se puede ejecutar desde la tabla `Mis pedidos recientes` para pedidos en estado `Pendiente`.
 
 Endpoints usados:
 

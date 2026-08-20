@@ -110,7 +110,8 @@ Implementado relacionado:
 
 Frontend:
 
-- El boton `Pagar Ahora (Checkout)` llama al endpoint real y muestra el numero de pedido creado.
+- El boton `Confirmar pedido y pagar` llama al endpoint real, crea el pedido y abre automaticamente el modal de pago.
+- El frontend refresca el catalogo tras el checkout para mostrar el stock actualizado.
 - El frontend muestra resumen del pedido creado y una tabla de pedidos recientes.
 
 Archivos relacionados:
@@ -217,6 +218,7 @@ No existe actualmente:
 - Algunas tablas existen en SQL pero no estan modeladas en SQLAlchemy.
 - La base local ya tiene catalogo demo cargado. Si se reinicia la base, volver a ejecutar `3_desarrollo/seed_catalogo_demo.sql`.
 - El pago implementado es simulado/controlado; no integra pasarela real bancaria.
+- Para restaurar stock demo agotado por pruebas o capturas, usar `4_pruebas/pruebas/reset_stock_demo.ps1`.
 
 ## Pruebas automatizadas
 

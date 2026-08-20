@@ -13,6 +13,8 @@ function App() {
     const [orders, setOrders] = useState([])
     const [lastOrder, setLastOrder] = useState(null)
     const [paymentResult, setPaymentResult] = useState(null)
+    const [paymentPromptOrder, setPaymentPromptOrder] = useState(null)
+    const [catalogReloadKey, setCatalogReloadKey] = useState(0)
     const [message, setMessage] = useState(null)
     const [isCheckingOut, setIsCheckingOut] = useState(false)
     const [isPaying, setIsPaying] = useState(false)
@@ -138,8 +140,10 @@ function App() {
         setIsCartOpen(false)
         setLastOrder(data)
         setPaymentResult(null)
+        setPaymentPromptOrder(data)
+        setCatalogReloadKey((key) => key + 1)
         await loadOrders()
-        showMessage(`Pedido #${data.idPedido} creado correctamente`)
+        showMessage(`Pedido #${data.idPedido} creado. Completa el pago para generar factura`)
     }
 
     const payOrder = async (order, paymentData) => {
@@ -171,12 +175,17 @@ function App() {
         }
 
         setPaymentResult(data)
+        setPaymentPromptOrder(null)
         setLastOrder((prev) => {
             const prevId = prev?.id || prev?.idPedido
             return prevId === orderId ? { ...prev, estado: data.pedido_estado } : prev
         })
         await loadOrders()
-        showMessage(`Pago aprobado. Factura ${data.factura?.numero_factura || ''}`.trim())
+        if (data.estado_transaccion === 'Aprobado') {
+            showMessage(`Pago aprobado. Factura ${data.factura?.numero_factura || ''}`.trim())
+        } else {
+            showMessage('Pago rechazado. El pedido sigue pendiente', 'error')
+        }
         return { ok: true, data }
     }
 
@@ -213,8 +222,8 @@ function App() {
             {view === 'home' && <>
                 <Navbar onLoginClick={() => setView('login')} onRegisterClick={() => setIsRegisterOpen(true)} onSearch={setSearchTerm} cartItemsCount={cartItems.reduce((total, item) => total + item.cantidad, 0)} onCartClick={() => setIsCartOpen(true)} />
                 <Hero />
-                <Catalog searchTerm={searchTerm} addToCart={addToCart} />
-                {currentUser?.role === 'cliente' && <OrdersPanel lastOrder={lastOrder} orders={orders} onPayOrder={payOrder} onViewPayment={viewPayment} isPaying={isPaying} paymentResult={paymentResult} />}
+                <Catalog searchTerm={searchTerm} addToCart={addToCart} reloadKey={catalogReloadKey} />
+                {currentUser?.role === 'cliente' && <OrdersPanel lastOrder={lastOrder} orders={orders} onPayOrder={payOrder} onViewPayment={viewPayment} isPaying={isPaying} paymentResult={paymentResult} paymentPromptOrder={paymentPromptOrder} onPaymentPromptClose={() => setPaymentPromptOrder(null)} />}
                 <Footer />
                 {isRegisterOpen && <RegisterModal onClose={() => setIsRegisterOpen(false)} onRegistered={(text) => showMessage(text)} />}
                 <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} items={cartItems} onRemove={removeCartItem} onUpdateQuantity={updateCartItemQuantity} onCheckout={checkoutCart} isCheckingOut={isCheckingOut} />
