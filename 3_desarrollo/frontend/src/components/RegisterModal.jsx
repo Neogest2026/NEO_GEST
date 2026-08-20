@@ -1,40 +1,9 @@
-// Importación de React y el Hook useState
-// useState permite manejar estados dentro del componente
 import React, { useState } from 'react'
 
-/*
-========================================================
-COMPONENTE REGISTER MODAL
-========================================================
-Este componente representa una ventana modal que permite
-registrar nuevos usuarios en el sistema NeoGest.
+const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
 
-El proceso de registro se realiza en DOS pasos:
-
-1️⃣ Crear usuario en la tabla "usuario"
-ENDPOINT:
-POST http://localhost:8000/register
-
-2️⃣ Crear cliente en la tabla "cliente"
-ENDPOINT:
-POST http://localhost:8000/clientes
-
-PROPS QUE RECIBE:
-onClose → función que cierra la ventana modal
-*/
-
-const RegisterModal = ({ onClose }) => {
-
-    /*
-    ========================================================
-    ESTADO DEL FORMULARIO
-    ========================================================
-    formData almacena todos los datos del cliente que
-    se registrará en el sistema.
-    */
-
+const RegisterModal = ({ onClose, onRegistered }) => {
     const [formData, setFormData] = useState({
-
         nombre_completo: '',
         telefono: '',
         direccion_envio: '',
@@ -42,148 +11,65 @@ const RegisterModal = ({ onClose }) => {
         codigo_postal: '',
         email: '',
         password: ''
-
     })
+    const [isSubmitting, setIsSubmitting] = useState(false)
+    const [message, setMessage] = useState(null)
 
-    /*
-    ========================================================
-    VALIDACIÓN DEL FORMULARIO
-    ========================================================
-    Esta función valida los datos ingresados antes de
-    enviarlos al backend.
-    */
+    const updateField = (field, value) => {
+        setFormData({ ...formData, [field]: value })
+    }
 
     const validarFormulario = () => {
-
-        // Validar nombre
-        if (formData.nombre_completo.length < 3) {
-            alert("El nombre debe tener mínimo 3 caracteres")
+        if (formData.nombre_completo.trim().length < 3) {
+            setMessage({ type: 'error', text: 'El nombre debe tener minimo 3 caracteres' })
             return false
         }
-
-        // Validar teléfono (solo números)
         if (!/^[0-9]+$/.test(formData.telefono)) {
-            alert("El teléfono solo debe contener números")
+            setMessage({ type: 'error', text: 'El telefono solo debe contener numeros' })
             return false
         }
-
-        // Validar correo
-        if (!formData.email.includes("@")) {
-            alert("Correo electrónico inválido")
+        if (!formData.email.includes('@')) {
+            setMessage({ type: 'error', text: 'Correo electronico invalido' })
             return false
         }
-
-        // Validar contraseña
         if (formData.password.length < 6) {
-            alert("La contraseña debe tener mínimo 6 caracteres")
+            setMessage({ type: 'error', text: 'La contrasena debe tener minimo 6 caracteres' })
             return false
         }
-
         return true
     }
 
-    /*
-    ========================================================
-    FUNCIÓN DE ENVÍO DEL FORMULARIO
-    ========================================================
-    handleSubmit se ejecuta cuando el usuario presiona
-    el botón "Registrarse".
-
-    Proceso:
-    1️⃣ Validar datos
-    2️⃣ Crear usuario
-    3️⃣ Crear cliente
-    */
-
     const handleSubmit = async (e) => {
-
-        // Evita que el formulario recargue la página
         e.preventDefault()
-
-        // Validar formulario
         if (!validarFormulario()) return
 
+        setIsSubmitting(true)
+        setMessage(null)
         try {
-
-            /*
-            ========================================================
-            PASO 1 → CREAR USUARIO
-            ========================================================
-            */
-
-            const responseUser = await fetch('http://localhost:8000/register', {
-
+            const response = await fetch(`${API_URL}/registro-cliente`, {
                 method: 'POST',
-
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-
-                body: JSON.stringify({
-
-                    email: formData.email,
-                    password: formData.password,
-                    rol: 3 // Rol cliente
-
-                })
-
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
             })
+            const data = await response.json()
 
-            const userData = await responseUser.json()
+            if (!response.ok) {
+                setMessage({ type: 'error', text: data.detail || 'Error en el registro' })
+                return
+            }
 
-            /*
-            ========================================================
-            PASO 2 → CREAR CLIENTE
-            ========================================================
-            */
-
-            await fetch('http://localhost:8000/clientes', {
-
-                method: 'POST',
-
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-
-                body: JSON.stringify({
-
-                    nombre_completo: formData.nombre_completo,
-                    telefono: formData.telefono,
-                    direccion_envio: formData.direccion_envio,
-                    direccion_facturacion: formData.direccion_facturacion,
-                    codigo_postal: formData.codigo_postal,
-                    usuario_id: userData.idUsuario
-
-                })
-
-            })
-
-            // Registro exitoso
-            alert("Registro exitoso")
-
-            // Cerrar modal
+            onRegistered?.('Registro exitoso. Ya puedes iniciar sesion.')
             onClose()
-
         } catch (error) {
-
-            console.error("Error:", error)
-            alert("Error en el registro")
-
+            console.error('Error:', error)
+            setMessage({ type: 'error', text: 'Error en el registro' })
+        } finally {
+            setIsSubmitting(false)
         }
-
     }
 
-    /*
-    ========================================================
-    RENDER DEL MODAL
-    ========================================================
-    */
-
     return (
-
-        // CONTENEDOR OSCURECIDO DE FONDO
         <div style={{
-
             position: 'fixed',
             top: 0,
             left: 0,
@@ -195,19 +81,8 @@ const RegisterModal = ({ onClose }) => {
             justifyContent: 'center',
             alignItems: 'center',
             zIndex: 1000
-
         }}>
-
-            {/* TARJETA DEL FORMULARIO */}
-            <div
-                className="auth-card"
-                style={{
-                    padding: '2.5rem',
-                    maxWidth: '440px'
-                }}
-            >
-
-                {/* TÍTULO */}
+            <div className="auth-card" style={{ padding: '2.5rem', maxWidth: '440px' }}>
                 <h2 style={{
                     fontSize: '1.75rem',
                     fontWeight: 700,
@@ -218,157 +93,36 @@ const RegisterModal = ({ onClose }) => {
                     Registrarse en Neogest
                 </h2>
 
-                {/* FORMULARIO */}
                 <form onSubmit={handleSubmit}>
-
-                    {/* CONTENEDOR DE INPUTS */}
-                    <div style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '0.75rem'
-                    }}>
-
-                        {/* NOMBRE COMPLETO */}
-                        <input
-                            className="auth-input"
-                            type="text"
-                            placeholder="Nombre completo"
-                            required
-                            onChange={e =>
-                                setFormData({
-                                    ...formData,
-                                    nombre_completo: e.target.value
-                                })
-                            }
-                        />
-
-                        {/* TELÉFONO */}
-                        <input
-                            className="auth-input"
-                            type="text"
-                            placeholder="Teléfono"
-                            required
-                            onChange={e =>
-                                setFormData({
-                                    ...formData,
-                                    telefono: e.target.value
-                                })
-                            }
-                        />
-
-                        {/* DIRECCIÓN DE ENVÍO */}
-                        <input
-                            className="auth-input"
-                            type="text"
-                            placeholder="Dirección de envío"
-                            required
-                            onChange={e =>
-                                setFormData({
-                                    ...formData,
-                                    direccion_envio: e.target.value
-                                })
-                            }
-                        />
-
-                        {/* DIRECCIÓN DE FACTURACIÓN */}
-                        <input
-                            className="auth-input"
-                            type="text"
-                            placeholder="Dirección de facturación"
-                            required
-                            onChange={e =>
-                                setFormData({
-                                    ...formData,
-                                    direccion_facturacion: e.target.value
-                                })
-                            }
-                        />
-
-                        {/* CÓDIGO POSTAL */}
-                        <input
-                            className="auth-input"
-                            type="text"
-                            placeholder="Código postal"
-                            required
-                            onChange={e =>
-                                setFormData({
-                                    ...formData,
-                                    codigo_postal: e.target.value
-                                })
-                            }
-                        />
-
-                        {/* EMAIL */}
-                        <input
-                            className="auth-input"
-                            type="email"
-                            placeholder="Correo electrónico"
-                            required
-                            onChange={e =>
-                                setFormData({
-                                    ...formData,
-                                    email: e.target.value
-                                })
-                            }
-                        />
-
-                        {/* CONTRASEÑA */}
-                        <input
-                            className="auth-input"
-                            type="password"
-                            placeholder="Contraseña"
-                            required
-                            onChange={e =>
-                                setFormData({
-                                    ...formData,
-                                    password: e.target.value
-                                })
-                            }
-                        />
-
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                        <input className="auth-input" type="text" placeholder="Nombre completo" required onChange={e => updateField('nombre_completo', e.target.value)} />
+                        <input className="auth-input" type="text" placeholder="Telefono" required onChange={e => updateField('telefono', e.target.value)} />
+                        <input className="auth-input" type="text" placeholder="Direccion de envio" required onChange={e => updateField('direccion_envio', e.target.value)} />
+                        <input className="auth-input" type="text" placeholder="Direccion de facturacion" required onChange={e => updateField('direccion_facturacion', e.target.value)} />
+                        <input className="auth-input" type="text" placeholder="Codigo postal" required onChange={e => updateField('codigo_postal', e.target.value)} />
+                        <input className="auth-input" type="email" placeholder="Correo electronico" required onChange={e => updateField('email', e.target.value)} />
+                        <input className="auth-input" type="password" placeholder="Contrasena" required onChange={e => updateField('password', e.target.value)} />
                     </div>
+                    {message && <p className={`inline-message ${message.type}`}>{message.text}</p>}
 
-                    {/* BOTONES */}
-                    <div style={{
-                        display: 'flex',
-                        gap: '1rem',
-                        marginTop: '2.5rem'
-                    }}>
-
-                        {/* BOTÓN REGISTRARSE */}
-                        <button
-                            type="submit"
-                            className="btn-auth-primary btn-auth-gold"
-                            style={{ margin: 0 }}
-                        >
-                            Registrarse
+                    <div style={{ display: 'flex', gap: '1rem', marginTop: '2.5rem' }}>
+                        <button type="submit" className="btn-auth-primary btn-auth-gold" style={{ margin: 0 }} disabled={isSubmitting}>
+                            {isSubmitting ? 'Registrando...' : 'Registrarse'}
                         </button>
-
-                        {/* BOTÓN CANCELAR */}
                         <button
                             type="button"
                             className="btn-auth-primary"
-                            style={{
-                                margin: 0,
-                                background: '#f3f4f6',
-                                color: '#111827',
-                                border: '1px solid #e5e7eb'
-                            }}
+                            style={{ margin: 0, background: '#f3f4f6', color: '#111827', border: '1px solid #e5e7eb' }}
                             onClick={onClose}
+                            disabled={isSubmitting}
                         >
                             Cancelar
                         </button>
-
                     </div>
-
                 </form>
-
             </div>
-
         </div>
-
     )
 }
 
-// Exportación del componente
 export default RegisterModal

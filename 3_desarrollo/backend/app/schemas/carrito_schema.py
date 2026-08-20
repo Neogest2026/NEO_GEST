@@ -10,3 +10,7 @@ class ItemCarritoCreate(BaseModel):
 class ItemCarritoUpdate(BaseModel):
     usuario_id: int
     cantidad: int = Field(ge=1)
+
+
+class CheckoutRequest(BaseModel):
+    usuario_id: int

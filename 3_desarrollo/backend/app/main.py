@@ -13,6 +13,8 @@ from app.routes import auth_routes
 from app.routes import cliente_routes
 from app.routes import catalogo_routes
 from app.routes import carrito_routes
+from app.routes import empleado_routes
+from app.routes import pedido_routes
 
 # ==============================
 # CREACIÓN DE LA APLICACIÓN
@@ -44,6 +46,8 @@ app.include_router(auth_routes.router)
 app.include_router(cliente_routes.router)
 app.include_router(catalogo_routes.router)
 app.include_router(carrito_routes.router)
+app.include_router(empleado_routes.router)
+app.include_router(pedido_routes.router)
 
 
 @app.get("/")
