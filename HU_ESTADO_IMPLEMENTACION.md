@@ -12,7 +12,7 @@ Este documento compara las pautas del equipo contra el codigo actual del proyect
 | HU-02 Gestion de Empleados | Implementado | Admin rol 1 crea empleados con cargo, usuario rol 2 y trazabilidad en `id_jefe_master`; la ruta esta protegida con JWT. |
 | HU-03 Catalogo y Detalle | Implementado | Lista, filtra, busca, muestra campos requeridos, deshabilita agotados y tiene modal de detalle conectado al backend. |
 | HU-04 Checkout y Pedido | Implementado | El carrito autenticado se confirma como pedido pendiente, migra items a detalle_pedido, guarda precio historico, descuenta stock y limpia carrito con rollback ante errores. |
-| HU-05 Pago y Facturacion | No implementado | Tablas existen, pero no hay endpoints ni flujo frontend. |
+| HU-05 Pago y Facturacion | Implementado | Registra pago, cambia pedido aprobado a `Pagado`, genera factura con RUC/NIT y muestra comprobante en frontend. |
 | HU-06 Gestion de Envios | No implementado | Tabla existe, dashboard muestra placeholder, no hay backend funcional. |
 | HU-07 Auditoria de Inventario | No implementado | Tabla existe, pero no hay endpoints ni actualizacion de stock por movimiento. |
 | HU-08 Gestion de Devoluciones | No implementado | Tabla existe, dashboard muestra placeholder, no hay backend funcional. |
@@ -120,23 +120,29 @@ Archivos relacionados:
 
 ## HU-05: Pago y Facturacion
 
-Estado: No implementado.
+Estado: Implementado.
 
-Existe en base de datos:
+Implementado:
 
-- Tabla `pago`.
-- Tabla `factura`.
+- Modelos SQLAlchemy `Pago` y `Factura`.
+- Schema Pydantic para registrar pago.
+- `POST /api/v1/pagos` para registrar pago de un pedido propio del cliente autenticado.
+- El monto del pago se toma desde `pedido.total_compra`; el cliente no puede modificarlo desde el payload.
+- Si `estado_transaccion` es `Aprobado`, el pedido cambia a `Pagado`.
+- Si el pago es aprobado, se crea una factura con `numero_factura` y `ruc_nit_cliente`.
+- Si el pago es `Rechazado`, se guarda el intento en `pago`, pero el pedido sigue `Pendiente` y no se genera factura.
+- Se evita registrar un segundo pago aprobado para el mismo pedido.
+- `GET /api/v1/pagos/pedido/{pedido_id}` permite consultar el comprobante de un pedido propio.
+- `GET /api/v1/pagos/mis-pagos` lista pagos del cliente autenticado.
+- El frontend permite pagar pedidos pendientes y consultar comprobantes de pedidos pagados.
 
-No existe actualmente:
+Archivos relacionados:
 
-- Modelo SQLAlchemy `Pago`.
-- Modelo SQLAlchemy `Factura`.
-- Schemas.
-- Endpoints para registrar pago.
-- Cambio de estado de pedido a `Pagado`.
-- Generacion de factura.
-- Captura o validacion de `ruc_nit_cliente`.
-- Flujo frontend.
+- `3_desarrollo/backend/app/models/pago.py`
+- `3_desarrollo/backend/app/schemas/pago_schema.py`
+- `3_desarrollo/backend/app/routes/pago_routes.py`
+- `3_desarrollo/frontend/src/components/Commerce.jsx`
+- `4_pruebas/pruebas/test_hu_05.ps1`
 
 ## HU-06: Gestion de Envios
 
@@ -199,10 +205,9 @@ No existe actualmente:
 
 ## Prioridad recomendada para avanzar
 
-1. Implementar HU-05 de forma simple: pago simulado aprobado/rechazado y factura basica.
-2. Implementar HU-06 para tracking de pedidos.
-3. Implementar HU-07 para control de stock administrativo.
-4. Implementar HU-08 al final, como indica su prioridad baja.
+1. Implementar HU-06 para tracking de pedidos.
+2. Implementar HU-07 para control de stock administrativo.
+3. Implementar HU-08 al final, como indica su prioridad baja.
 
 ## Riesgos tecnicos encontrados
 
@@ -211,6 +216,7 @@ No existe actualmente:
 - El dashboard administrativo usa datos fijos y placeholders.
 - Algunas tablas existen en SQL pero no estan modeladas en SQLAlchemy.
 - La base local ya tiene catalogo demo cargado. Si se reinicia la base, volver a ejecutar `3_desarrollo/seed_catalogo_demo.sql`.
+- El pago implementado es simulado/controlado; no integra pasarela real bancaria.
 
 ## Pruebas automatizadas
 
@@ -221,6 +227,7 @@ Ejecutar con backend activo:
 ```powershell
 powershell -ExecutionPolicy Bypass -File 4_pruebas\pruebas\test_hu_01_04.ps1
 powershell -ExecutionPolicy Bypass -File 4_pruebas\pruebas\test_hu_01_04_negativas.ps1
+powershell -ExecutionPolicy Bypass -File 4_pruebas\pruebas\test_hu_05.ps1
 ```
 
 La prueba de flujo exitoso valida:
@@ -245,3 +252,4 @@ La prueba negativa valida:
 - Checkout con carrito vacio.
 
 La matriz de cierre funcional, criterios de aceptacion y capturas sugeridas quedo en `4_pruebas/MATRIZ_CIERRE_HU_01_04.md`.
+La matriz de cierre de HU-05 quedo en `4_pruebas/MATRIZ_CIERRE_HU_05.md`.

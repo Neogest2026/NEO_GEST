@@ -55,6 +55,12 @@ if (-not $producto.imagen_url -or -not $producto.precio_unitario -or -not $produ
     throw "Detalle de producto incompleto"
 }
 
+$productosDisponibles = Invoke-Json -Method "GET" -Uri "$ApiUrl/api/v1/productos"
+$productoDisponible = $productosDisponibles | Where-Object { $_.stock_actual -gt 0 } | Sort-Object stock_actual -Descending | Select-Object -First 1
+if (-not $productoDisponible) {
+    throw "No hay productos con stock para probar carrito. Recarga 3_desarrollo/seed_catalogo_demo.sql"
+}
+
 $registro = Invoke-Json -Method "POST" -Uri "$ApiUrl/registro-cliente" -Body @{
     email = "cliente_smoke_$RunId@neogest.local"
     password = "123456"
@@ -72,7 +78,7 @@ $nuevoClienteLogin = Invoke-Json -Method "POST" -Uri "$ApiUrl/login" -Body @{
 
 $carrito = Invoke-Json -Method "POST" -Uri "$ApiUrl/api/v1/carrito/items" -Token $nuevoClienteLogin.access_token -Body @{
     usuario_id = $registro.idUsuario
-    producto_id = 2
+    producto_id = $productoDisponible.id
     cantidad = 1
 }
 if ($carrito.items.Count -lt 1) { throw "El carrito no recibio items" }

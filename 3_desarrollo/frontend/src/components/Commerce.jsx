@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 
 const formatPrice = (price) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(price || 0)
 
@@ -88,7 +88,116 @@ export const CartDrawer = ({ isOpen, onClose, items, onRemove, onUpdateQuantity,
     )
 }
 
-export const OrdersPanel = ({ lastOrder, orders }) => {
+const getOrderId = (order) => order?.id || order?.idPedido
+
+const PaymentModal = ({ order, onClose, onSubmit, isPaying }) => {
+    const [form, setForm] = useState({
+        metodo: 'Tarjeta',
+        ruc_nit_cliente: '',
+        estado_transaccion: 'Aprobado',
+    })
+    const [error, setError] = useState(null)
+
+    const updateField = (field, value) => setForm((current) => ({ ...current, [field]: value }))
+
+    const handleSubmit = async (event) => {
+        event.preventDefault()
+        if (form.ruc_nit_cliente.trim().length < 5) {
+            setError('Ingresa un RUC/NIT valido')
+            return
+        }
+        setError(null)
+        const result = await onSubmit(order, {
+            ...form,
+            ruc_nit_cliente: form.ruc_nit_cliente.trim(),
+        })
+        if (result?.ok) onClose()
+    }
+
+    return (
+        <div className="modal-backdrop">
+            <div className="payment-modal">
+                <div className="payment-modal-header">
+                    <div>
+                        <span className="order-kicker">Pago de pedido</span>
+                        <h2>Pedido #{getOrderId(order)}</h2>
+                    </div>
+                    <button type="button" onClick={onClose} disabled={isPaying} className="icon-close">x</button>
+                </div>
+
+                <div className="payment-summary">
+                    <span>Total</span>
+                    <strong>{formatPrice(order?.total_compra)}</strong>
+                </div>
+
+                <form onSubmit={handleSubmit} className="payment-form">
+                    <label>
+                        Metodo
+                        <select value={form.metodo} onChange={(event) => updateField('metodo', event.target.value)}>
+                            <option value="Tarjeta">Tarjeta</option>
+                            <option value="PSE">PSE</option>
+                            <option value="Transferencia">Transferencia</option>
+                            <option value="Efectivo">Efectivo</option>
+                        </select>
+                    </label>
+
+                    <label>
+                        RUC/NIT
+                        <input
+                            type="text"
+                            value={form.ruc_nit_cliente}
+                            onChange={(event) => updateField('ruc_nit_cliente', event.target.value)}
+                            maxLength={45}
+                            required
+                        />
+                    </label>
+
+                    <label>
+                        Resultado
+                        <select value={form.estado_transaccion} onChange={(event) => updateField('estado_transaccion', event.target.value)}>
+                            <option value="Aprobado">Aprobado</option>
+                            <option value="Rechazado">Rechazado</option>
+                        </select>
+                    </label>
+
+                    {error && <div className="inline-message error">{error}</div>}
+
+                    <button type="submit" disabled={isPaying} className="btn btn-primary">
+                        {isPaying ? 'Procesando...' : 'Confirmar pago'}
+                    </button>
+                </form>
+            </div>
+        </div>
+    )
+}
+
+const PaymentReceipt = ({ payment }) => {
+    if (!payment) return null
+
+    return (
+        <div className="payment-receipt">
+            <div>
+                <span className="order-kicker">Comprobante</span>
+                <h2>Pedido #{payment.pedido_id}</h2>
+                <p>Pago: {payment.estado_transaccion}</p>
+            </div>
+            <div className="receipt-grid">
+                <span>Metodo</span>
+                <strong>{payment.metodo}</strong>
+                <span>Monto</span>
+                <strong>{formatPrice(payment.monto)}</strong>
+                <span>Factura</span>
+                <strong>{payment.factura?.numero_factura || 'No generada'}</strong>
+                <span>RUC/NIT</span>
+                <strong>{payment.factura?.ruc_nit_cliente || 'No aplica'}</strong>
+            </div>
+        </div>
+    )
+}
+
+export const OrdersPanel = ({ lastOrder, orders, onPayOrder, onViewPayment, isPaying, paymentResult }) => {
+    const [paymentOrder, setPaymentOrder] = useState(null)
+
     if (!lastOrder && orders.length === 0) return null
 
     return (
@@ -97,12 +206,21 @@ export const OrdersPanel = ({ lastOrder, orders }) => {
                 <div className="order-success">
                     <div>
                         <span className="order-kicker">Pedido creado</span>
-                        <h2>Pedido #{lastOrder.idPedido}</h2>
+                        <h2>Pedido #{getOrderId(lastOrder)}</h2>
                         <p>Estado: {lastOrder.estado}</p>
                     </div>
-                    <strong>{formatPrice(lastOrder.total_compra)}</strong>
+                    <div className="order-actions">
+                        <strong>{formatPrice(lastOrder.total_compra)}</strong>
+                        {lastOrder.estado === 'Pendiente' && (
+                            <button type="button" className="btn btn-primary" onClick={() => setPaymentOrder(lastOrder)}>
+                                Pagar
+                            </button>
+                        )}
+                    </div>
                 </div>
             )}
+
+            <PaymentReceipt payment={paymentResult} />
 
             <div style={{ marginTop: '1.5rem', background: '#fff', border: '1px solid #e5e7eb', borderRadius: '0.5rem', overflow: 'hidden' }}>
                 <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid #e5e7eb' }}>
@@ -115,25 +233,46 @@ export const OrdersPanel = ({ lastOrder, orders }) => {
                             <th>Estado</th>
                             <th>Total</th>
                             <th>Items</th>
+                            <th>Accion</th>
                         </tr>
                     </thead>
                     <tbody>
                         {orders.map((order) => (
                             <tr key={order.id}>
                                 <td>#{order.id}</td>
-                                <td><span className="badge badge-pending">{order.estado}</span></td>
+                                <td><span className={`badge ${order.estado === 'Pagado' ? 'badge-paid' : 'badge-pending'}`}>{order.estado}</span></td>
                                 <td>{formatPrice(order.total_compra)}</td>
                                 <td>{order.items.length}</td>
+                                <td>
+                                    {order.estado === 'Pendiente' && (
+                                        <button type="button" className="table-action" onClick={() => setPaymentOrder(order)}>
+                                            Pagar
+                                        </button>
+                                    )}
+                                    {order.estado === 'Pagado' && (
+                                        <button type="button" className="table-action" onClick={() => onViewPayment(order)}>
+                                            Comprobante
+                                        </button>
+                                    )}
+                                </td>
                             </tr>
                         ))}
                         {orders.length === 0 && (
                             <tr>
-                                <td colSpan="4" style={{ textAlign: 'center', color: '#64748b' }}>Todavia no tienes pedidos.</td>
+                                <td colSpan="5" style={{ textAlign: 'center', color: '#64748b' }}>Todavia no tienes pedidos.</td>
                             </tr>
                         )}
                     </tbody>
                 </table>
             </div>
+            {paymentOrder && (
+                <PaymentModal
+                    order={paymentOrder}
+                    onClose={() => setPaymentOrder(null)}
+                    onSubmit={onPayOrder}
+                    isPaying={isPaying}
+                />
+            )}
         </section>
     )
 }

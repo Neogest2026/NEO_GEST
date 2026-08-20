@@ -12,8 +12,10 @@ function App() {
     const [cartItems, setCartItems] = useState([])
     const [orders, setOrders] = useState([])
     const [lastOrder, setLastOrder] = useState(null)
+    const [paymentResult, setPaymentResult] = useState(null)
     const [message, setMessage] = useState(null)
     const [isCheckingOut, setIsCheckingOut] = useState(false)
+    const [isPaying, setIsPaying] = useState(false)
     const [currentUser, setCurrentUser] = useState(() => {
         const savedUser = localStorage.getItem('neogest_user')
         return savedUser ? JSON.parse(savedUser) : null
@@ -135,8 +137,59 @@ function App() {
         setCartItems([])
         setIsCartOpen(false)
         setLastOrder(data)
+        setPaymentResult(null)
         await loadOrders()
         showMessage(`Pedido #${data.idPedido} creado correctamente`)
+    }
+
+    const payOrder = async (order, paymentData) => {
+        if (!currentUser || currentUser.role !== 'cliente') {
+            showMessage('Inicia sesion como cliente para pagar el pedido', 'error')
+            setView('login')
+            return { ok: false }
+        }
+        if (isPaying) return { ok: false }
+
+        const orderId = order.id || order.idPedido
+        setIsPaying(true)
+        const response = await fetch(`${API_URL}/api/v1/pagos`, {
+            method: 'POST',
+            headers: authHeaders(),
+            body: JSON.stringify({
+                pedido_id: orderId,
+                metodo: paymentData.metodo,
+                ruc_nit_cliente: paymentData.ruc_nit_cliente,
+                estado_transaccion: paymentData.estado_transaccion || 'Aprobado',
+            }),
+        })
+        const data = await response.json()
+        setIsPaying(false)
+
+        if (!response.ok) {
+            showMessage(data.detail || 'No fue posible registrar el pago', 'error')
+            return { ok: false, error: data.detail }
+        }
+
+        setPaymentResult(data)
+        setLastOrder((prev) => {
+            const prevId = prev?.id || prev?.idPedido
+            return prevId === orderId ? { ...prev, estado: data.pedido_estado } : prev
+        })
+        await loadOrders()
+        showMessage(`Pago aprobado. Factura ${data.factura?.numero_factura || ''}`.trim())
+        return { ok: true, data }
+    }
+
+    const viewPayment = async (order) => {
+        const orderId = order.id || order.idPedido
+        const response = await fetch(`${API_URL}/api/v1/pagos/pedido/${orderId}`, { headers: authHeaders() })
+        const data = await response.json()
+        if (!response.ok) {
+            showMessage(data.detail || 'No fue posible consultar el comprobante', 'error')
+            return null
+        }
+        setPaymentResult(data)
+        return data
     }
 
     const handleLogin = (user) => {
@@ -161,7 +214,7 @@ function App() {
                 <Navbar onLoginClick={() => setView('login')} onRegisterClick={() => setIsRegisterOpen(true)} onSearch={setSearchTerm} cartItemsCount={cartItems.reduce((total, item) => total + item.cantidad, 0)} onCartClick={() => setIsCartOpen(true)} />
                 <Hero />
                 <Catalog searchTerm={searchTerm} addToCart={addToCart} />
-                {currentUser?.role === 'cliente' && <OrdersPanel lastOrder={lastOrder} orders={orders} />}
+                {currentUser?.role === 'cliente' && <OrdersPanel lastOrder={lastOrder} orders={orders} onPayOrder={payOrder} onViewPayment={viewPayment} isPaying={isPaying} paymentResult={paymentResult} />}
                 <Footer />
                 {isRegisterOpen && <RegisterModal onClose={() => setIsRegisterOpen(false)} onRegistered={(text) => showMessage(text)} />}
                 <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} items={cartItems} onRemove={removeCartItem} onUpdateQuantity={updateCartItemQuantity} onCheckout={checkoutCart} isCheckingOut={isCheckingOut} />

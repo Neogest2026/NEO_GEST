@@ -73,4 +73,4 @@ OK: HU-01, HU-02, HU-03 y HU-04 validaciones negativas verificadas
 
 ## Estado para avanzar
 
-HU-01, HU-02, HU-03 y HU-04 quedan listas para cierre funcional. Antes de iniciar HU-05 se recomienda guardar las capturas anteriores y anexar la salida de las dos pruebas automatizadas en el documento final.
+HU-01, HU-02, HU-03 y HU-04 quedan listas para cierre funcional. Se recomienda guardar las capturas anteriores y anexar la salida de las pruebas automatizadas en el documento final.

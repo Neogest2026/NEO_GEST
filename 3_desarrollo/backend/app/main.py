@@ -14,6 +14,7 @@ from app.routes import cliente_routes
 from app.routes import catalogo_routes
 from app.routes import carrito_routes
 from app.routes import empleado_routes
+from app.routes import pago_routes
 from app.routes import pedido_routes
 
 # ==============================
@@ -48,6 +49,7 @@ app.include_router(catalogo_routes.router)
 app.include_router(carrito_routes.router)
 app.include_router(empleado_routes.router)
 app.include_router(pedido_routes.router)
+app.include_router(pago_routes.router)
 
 
 @app.get("/")

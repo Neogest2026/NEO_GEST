@@ -187,6 +187,23 @@ OK: HU-01, HU-02, HU-03 y HU-04 validaciones negativas verificadas
 
 La matriz de cierre funcional, criterios y capturas sugeridas esta en `4_pruebas/MATRIZ_CIERRE_HU_01_04.md`.
 
+### 4.5. Ejecutar prueba automatizada HU-05
+
+Con el backend activo:
+
+```powershell
+cd C:\Users\jebus\OneDrive\Documentos\NEO_GEST
+powershell -ExecutionPolicy Bypass -File 4_pruebas\pruebas\test_hu_05.ps1
+```
+
+Resultado esperado:
+
+```text
+OK: HU-05 pago aprobado, factura y validaciones verificadas
+```
+
+La matriz de cierre de pago y facturacion esta en `4_pruebas/MATRIZ_CIERRE_HU_05.md`.
+
 ## 5. Credenciales encontradas
 
 En el SQL actual:
@@ -304,9 +321,40 @@ Al confirmar:
 - Se descuenta `stock_actual`.
 - Se eliminan los items del carrito.
 
-El pago y la factura todavia no estan implementados.
+Despues del checkout, el pedido queda disponible para pago desde el panel de pedidos recientes.
 
-### 6.5. Dashboard administrativo
+### 6.5. Pago y facturacion
+
+El pago se ejecuta desde la tabla `Mis pedidos recientes` para pedidos en estado `Pendiente`.
+
+Endpoints usados:
+
+- `POST /api/v1/pagos`: registra pago de un pedido del cliente autenticado.
+- `GET /api/v1/pagos/pedido/{pedido_id}`: consulta comprobante de un pedido.
+- `GET /api/v1/pagos/mis-pagos`: lista pagos del cliente autenticado.
+
+Payload de pago:
+
+```json
+{
+  "pedido_id": 10,
+  "metodo": "Tarjeta",
+  "ruc_nit_cliente": "900123456-7",
+  "estado_transaccion": "Aprobado"
+}
+```
+
+Reglas implementadas:
+
+- El cliente solo puede pagar pedidos propios.
+- El monto se toma desde `pedido.total_compra`.
+- Si el pago queda `Aprobado`, el pedido cambia a `Pagado`.
+- Si el pago queda `Aprobado`, se crea un registro en `factura` con `ruc_nit_cliente`.
+- Si el pago queda `Rechazado`, el pedido sigue `Pendiente` y no se genera factura.
+- El sistema bloquea un segundo pago aprobado sobre el mismo pedido.
+- El frontend muestra comprobante con metodo, monto, numero de factura y RUC/NIT.
+
+### 6.6. Dashboard administrativo
 
 Se accede entrando a:
 
@@ -385,6 +433,9 @@ Rutas detectadas:
 | POST | `/api/v1/empleados` | Crear empleado como admin |
 | GET | `/api/v1/pedidos/mis-pedidos` | Listar pedidos del cliente autenticado |
 | GET | `/api/v1/pedidos/{pedido_id}` | Consultar un pedido del cliente autenticado |
+| POST | `/api/v1/pagos` | Registrar pago y generar factura si es aprobado |
+| GET | `/api/v1/pagos/mis-pagos` | Listar pagos del cliente autenticado |
+| GET | `/api/v1/pagos/pedido/{pedido_id}` | Consultar comprobante/factura de un pedido |
 
 ## 8. Modelo de datos actual
 
@@ -417,11 +468,11 @@ Tablas usadas directamente por el backend actual:
 - `pedido`
 - `detalle_pedido`
 - `empleado`
+- `pago`
+- `factura`
 
 Tablas modeladas en SQL pero sin endpoints actuales:
 
-- `pago`
-- `factura`
 - `envio`
 - `devolucion`
 - `movimiento_inventario`
@@ -446,10 +497,14 @@ Capturas funcionales:
 6. Modal de registro.
 7. Pantalla de login.
 8. Carrito abierto con productos.
-9. Login administrativo desde `/#admin`.
-10. Dashboard administrativo.
-11. Gestion de empleados en la pestana `Usuarios`.
-12. Pantallas placeholder de inventario, pedidos, envios, facturacion, devolucion y configuracion.
+9. Pedido pendiente en `Mis pedidos recientes`.
+10. Modal de pago con metodo y RUC/NIT.
+11. Comprobante/factura despues de pago aprobado.
+12. Pedido actualizado a estado `Pagado`.
+13. Login administrativo desde `/#admin`.
+14. Dashboard administrativo.
+15. Gestion de empleados en la pestana `Usuarios`.
+16. Pantallas placeholder de inventario, envios, devolucion y configuracion.
 
 Capturas de analisis/diseno:
 
@@ -472,7 +527,8 @@ Capturas de analisis/diseno:
 - El checkout ya crea pedido, detalle de pedido, descuenta stock y permite listar pedidos del cliente.
 - Los componentes React principales fueron limpiados de mensajes con codificacion rota.
 - El dashboard admin es parcialmente maqueta.
-- Pago, facturacion, envios y devoluciones estan modelados en base de datos, pero no implementados como flujo funcional completo.
+- Pago y facturacion ya tienen flujo funcional simulado desde pedidos del cliente.
+- Envios y devoluciones estan modelados en base de datos, pero no implementados como flujo funcional completo.
 
 ## 11. Ruta sugerida para completar documentacion
 
@@ -480,8 +536,8 @@ Capturas de analisis/diseno:
 2. Importar `3_desarrollo/neogest.sql`.
 3. Cargar datos de prueba para `categoria` y `producto`.
 4. Levantar backend y frontend.
-5. Ejecutar `test_hu_01_04.ps1` y `test_hu_01_04_negativas.ps1`.
-6. Tomar capturas siguiendo la lista del punto 9 y la matriz `4_pruebas/MATRIZ_CIERRE_HU_01_04.md`.
+5. Ejecutar `test_hu_01_04.ps1`, `test_hu_01_04_negativas.ps1` y `test_hu_05.ps1`.
+6. Tomar capturas siguiendo la lista del punto 9 y las matrices `4_pruebas/MATRIZ_CIERRE_HU_01_04.md` y `4_pruebas/MATRIZ_CIERRE_HU_05.md`.
 7. Separar el manual final en:
    - Manual tecnico de instalacion.
    - Manual de usuario cliente.
