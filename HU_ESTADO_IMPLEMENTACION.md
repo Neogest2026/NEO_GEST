@@ -212,17 +212,18 @@ No existe actualmente:
 - Algunas tablas existen en SQL pero no estan modeladas en SQLAlchemy.
 - La base local ya tiene catalogo demo cargado. Si se reinicia la base, volver a ejecutar `3_desarrollo/seed_catalogo_demo.sql`.
 
-## Prueba automatizada
+## Pruebas automatizadas
 
-Se agrego `4_pruebas/pruebas/test_hu_01_04.ps1`.
+Se agregaron pruebas automatizadas para flujo exitoso y validaciones negativas.
 
 Ejecutar con backend activo:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File 4_pruebas\pruebas\test_hu_01_04.ps1
+powershell -ExecutionPolicy Bypass -File 4_pruebas\pruebas\test_hu_01_04_negativas.ps1
 ```
 
-La prueba valida:
+La prueba de flujo exitoso valida:
 
 - Login admin con token.
 - Creacion de empleado por admin.
@@ -232,3 +233,15 @@ La prueba valida:
 - Agregar al carrito.
 - Checkout.
 - Listado de pedidos del cliente.
+
+La prueba negativa valida:
+
+- Registro con correo duplicado.
+- Registro con telefono invalido.
+- Bloqueo de gestion de empleados para cliente.
+- Bloqueo de carrito sin token.
+- Stock insuficiente.
+- Producto agotado con `disponible=false`.
+- Checkout con carrito vacio.
+
+La matriz de cierre funcional, criterios de aceptacion y capturas sugeridas quedo en `4_pruebas/MATRIZ_CIERRE_HU_01_04.md`.

@@ -102,7 +102,7 @@ Importar el script compatible con el backend actual:
 Get-Content .\3_desarrollo\neogest.sql | & "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" -u root -p neogest
 ```
 
-El script recomendado es `3_desarrollo/neogest.sql`, porque usa la columna `password_hash`, que es la que consulta el backend. Varios scripts de `4_pruebas/pruebas` usan columna `password` y no coinciden con el codigo actual.
+El script recomendado es `3_desarrollo/neogest.sql`, porque usa la columna `password_hash`, que es la que consulta el backend. Los scripts principales de `4_pruebas/pruebas` fueron alineados con este esquema para evitar diferencias entre instalacion, pruebas y documentacion.
 
 Para cargar el catalogo demo usado en esta revision:
 
@@ -171,6 +171,21 @@ Resultado esperado:
 ```text
 OK: HU-01, HU-02, HU-03 y HU-04 verificadas
 ```
+
+Para validar errores esperados, seguridad y reglas de negocio negativas:
+
+```powershell
+cd C:\Users\jebus\OneDrive\Documentos\NEO_GEST
+powershell -ExecutionPolicy Bypass -File 4_pruebas\pruebas\test_hu_01_04_negativas.ps1
+```
+
+Resultado esperado:
+
+```text
+OK: HU-01, HU-02, HU-03 y HU-04 validaciones negativas verificadas
+```
+
+La matriz de cierre funcional, criterios y capturas sugeridas esta en `4_pruebas/MATRIZ_CIERRE_HU_01_04.md`.
 
 ## 5. Credenciales encontradas
 
@@ -450,6 +465,7 @@ Capturas de analisis/diseno:
 - La conexion MySQL ya fue validada con la clave local configurada.
 - El login admin fue validado correctamente con `admin@neogest.com / admin123`.
 - El script SQL mas compatible es `3_desarrollo/neogest.sql`.
+- Los scripts SQL de `4_pruebas/pruebas/neogest_finaldb.sql` y `4_pruebas/pruebas/neogestdb.sql` fueron normalizados con el esquema vigente.
 - El catalogo demo fue cargado con `3_desarrollo/seed_catalogo_demo.sql`.
 - El detalle de producto ya esta conectado al backend.
 - La gestion de empleados ya crea usuario rol 2 y empleado desde el dashboard con token admin.
@@ -460,12 +476,13 @@ Capturas de analisis/diseno:
 
 ## 11. Ruta sugerida para completar documentacion
 
-1. Corregir o confirmar credenciales de MySQL.
+1. Confirmar credenciales de MySQL en `3_desarrollo/backend/.env`.
 2. Importar `3_desarrollo/neogest.sql`.
 3. Cargar datos de prueba para `categoria` y `producto`.
 4. Levantar backend y frontend.
-5. Tomar capturas siguiendo la lista del punto 9.
-6. Separar el manual final en:
+5. Ejecutar `test_hu_01_04.ps1` y `test_hu_01_04_negativas.ps1`.
+6. Tomar capturas siguiendo la lista del punto 9 y la matriz `4_pruebas/MATRIZ_CIERRE_HU_01_04.md`.
+7. Separar el manual final en:
    - Manual tecnico de instalacion.
    - Manual de usuario cliente.
    - Manual de administrador.

@@ -8,7 +8,7 @@ CREATE TABLE `USUARIO` (
   `id_usuario` int PRIMARY KEY,
   `id_rol` int,
   `email` varchar(255) COMMENT 'Login',
-  `password` varchar(255) COMMENT 'Hash',
+  `password_hash` varchar(255) COMMENT 'Hash bcrypt',
   `fecha_registro` datetime,
   `estado` boolean COMMENT 'Activo/Inactivo'
 );
