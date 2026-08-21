@@ -1,11 +1,9 @@
 from sqlalchemy import Column, Integer, String
+
 from app.database import Base
-# ==============================
-# MODELO ORM (TABLA USUARIO)
-# ==============================
+
 
 class Usuario(Base):
-
     __tablename__ = "Usuario"
 
     idUsuario = Column(Integer, primary_key=True, index=True)

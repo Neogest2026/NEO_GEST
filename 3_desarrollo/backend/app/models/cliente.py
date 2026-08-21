@@ -1,12 +1,9 @@
 from sqlalchemy import Column, Integer, String
+
 from app.database import Base
 
-# ==============================
-# MODELO ORM (TABLA CLIENTE)
-# ==============================
 
 class Cliente(Base):
-
     __tablename__ = "cliente"
 
     idCliente = Column(Integer, primary_key=True, index=True)

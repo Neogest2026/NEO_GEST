@@ -38,13 +38,6 @@ def cancelar_pedido_pendiente(pedido: Pedido, db: Session, estado_final: str = E
     return pedido
 
 
-def pedido_esta_vencido(pedido: Pedido):
-    if PENDING_ORDER_EXPIRATION_MINUTES <= 0 or not pedido.fecha_creacion:
-        return False
-    vence_en = pedido.fecha_creacion + timedelta(minutes=PENDING_ORDER_EXPIRATION_MINUTES)
-    return vence_en <= datetime.utcnow()
-
-
 def _query_pedidos_pendientes_vencidos(db: Session, cliente_id: int | None = None):
     if PENDING_ORDER_EXPIRATION_MINUTES <= 0:
         return []

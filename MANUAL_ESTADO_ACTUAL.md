@@ -20,7 +20,6 @@ La aplicacion muestra una tienda publica con landing, catalogo, detalle de produ
 ```text
 NEO_GEST/
   README.md
-  index.html
   1_requisitos/
     DOCUMENTACION.md
     documentacion_neogest.md.resolved
@@ -32,7 +31,7 @@ NEO_GEST/
     Neogest db.mwb
   3_desarrollo/
     neogest.sql
-    guia_insta.docx
+    Guia_instalacion_NEOGEST.docx
     backend/
       requirements.txt
       app/
@@ -55,7 +54,7 @@ NEO_GEST/
       *.sql
 ```
 
-El desarrollo activo esta en `3_desarrollo/backend` y `3_desarrollo/frontend`. El `index.html` de la raiz parece ser una version estatica anterior.
+El desarrollo activo esta en `3_desarrollo/backend` y `3_desarrollo/frontend`.
 
 ## 3. Requisitos para ejecutarlo
 

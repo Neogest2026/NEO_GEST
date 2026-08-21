@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Navbar, Hero, Catalog, Login, Dashboard, RegisterModal } from './components'
 import { Footer, CartDrawer, OrdersPanel } from './components/Commerce'
 
@@ -24,32 +24,32 @@ function App() {
         return savedUser ? JSON.parse(savedUser) : null
     })
 
-    const showMessage = (text, type = 'success') => {
+    const showMessage = useCallback((text, type = 'success') => {
         setMessage({ text, type })
         window.setTimeout(() => setMessage(null), 4500)
-    }
+    }, [])
 
-    const authHeaders = () => ({
+    const authHeaders = useCallback(() => ({
         'Content-Type': 'application/json',
         ...(currentUser?.token ? { Authorization: `Bearer ${currentUser.token}` } : {}),
-    })
+    }), [currentUser?.token])
 
     const apiUrl = (path) => path?.startsWith('http') ? path : `${API_URL}${path}`
 
-    const loadCart = async (userId) => {
+    const loadCart = useCallback(async (userId) => {
         const response = await fetch(`${API_URL}/api/v1/carrito/${userId}`, { headers: authHeaders() })
         if (!response.ok) throw new Error('No fue posible cargar el carrito')
         const data = await response.json()
         setCartItems(data.items)
-    }
+    }, [authHeaders])
 
-    const loadOrders = async () => {
+    const loadOrders = useCallback(async () => {
         if (!currentUser?.token || currentUser.role !== 'cliente') return
         const response = await fetch(`${API_URL}/api/v1/pedidos/mis-pedidos`, { headers: authHeaders() })
         if (!response.ok) return
         const data = await response.json()
         setOrders(data)
-    }
+    }, [authHeaders, currentUser?.role, currentUser?.token])
 
     useEffect(() => {
         const handleHashChange = () => setView(window.location.hash === '#admin' ? 'admin-login' : 'home')
@@ -68,7 +68,7 @@ function App() {
             setCartItems([])
             setOrders([])
         }
-    }, [currentUser])
+    }, [currentUser, loadCart, loadOrders, showMessage])
 
     const addToCart = async (product) => {
         if (!currentUser || currentUser.role !== 'cliente') {
@@ -230,7 +230,7 @@ function App() {
             setCatalogReloadKey((key) => key + 1)
             showMessage('Pedido cancelado. El stock fue liberado')
             return true
-        } catch (error) {
+        } catch {
             showMessage('No fue posible cancelar el pedido', 'error')
             return false
         } finally {

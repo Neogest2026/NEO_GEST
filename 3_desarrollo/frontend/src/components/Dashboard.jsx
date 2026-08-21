@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
 
@@ -33,12 +33,12 @@ const Dashboard = ({ onLogout, currentUser }) => {
         { label: 'Envios en Transito', value: '18', change: '', isPositive: true },
     ]
 
-    const authHeaders = () => ({
+    const authHeaders = useCallback(() => ({
         'Content-Type': 'application/json',
         Authorization: `Bearer ${currentUser?.token}`,
-    })
+    }), [currentUser?.token])
 
-    const loadEmpleados = async () => {
+    const loadEmpleados = useCallback(async () => {
         if (!currentUser?.token) return
         setEmpleadosError('')
         try {
@@ -53,13 +53,13 @@ const Dashboard = ({ onLogout, currentUser }) => {
             console.error(error)
             setEmpleadosError('No fue posible conectar con empleados')
         }
-    }
+    }, [authHeaders, currentUser?.token])
 
     useEffect(() => {
         if (activeTab === 'usuarios') {
             loadEmpleados()
         }
-    }, [activeTab, currentUser])
+    }, [activeTab, loadEmpleados])
 
     const updateEmpleadoForm = (field, value) => {
         setEmpleadoForm({ ...empleadoForm, [field]: value })

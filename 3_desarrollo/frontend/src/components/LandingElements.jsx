@@ -1,53 +1,45 @@
-// Importación de React y Hooks necesarios
-import React, { useState, useEffect } from 'react'
-/*
-========================================================
-COMPONENTE NAVBAR (BARRA DE NAVEGACIÓN)
-========================================================
-Este componente representa la barra superior del sitio web.
-Contiene:
-- Logo de la empresa
-- Menú de navegación
-- Categorías desplegables
-- Buscador de productos
-- Icono de carrito
-- Botones de login y registro
-Props que recibe:
-onLoginClick → función que abre el login
-onRegisterClick → función que abre el registro
-onSearch → función para buscar productos
-cartItemsCount → número de productos en el carrito
-onCartClick → abrir el carrito
-*/
+import { useEffect, useState } from 'react'
+
+const NAV_CATEGORIES = {
+    hogar: [
+        'Sala', 'Comedores', 'Lamparas', 'Mesas', 'Camas',
+        'Sillones', 'Sofas', 'Sillas', 'Estantes', 'Cajones',
+        'Nocheros', 'Repisas',
+    ],
+    oficina: [
+        'Escritorios', 'Sillas', 'Lamparas', 'Repisas',
+        'Puertas', 'Ventanas', 'Sofas',
+    ],
+}
+
+const HERO_SLIDES = [
+    {
+        title: 'Diseno Minimalista para tu Hogar',
+        desc: 'Explora la elegancia funcional de nuestra nueva coleccion NeoGest.',
+        img: '/images/hero.png',
+    },
+    {
+        title: 'Tu Oficina, Tu Santuario',
+        desc: 'Eficiencia y confort en cada detalle con acabados premium.',
+        img: '/images/comedor.png',
+    },
+    {
+        title: 'Confort sin Limites',
+        desc: 'Sofas y camas disenados para el descanso definitivo.',
+        img: '/images/sofa.png',
+    },
+    {
+        title: 'Detalles que Enamoran',
+        desc: 'Lamparas y accesorios que transforman cualquier espacio.',
+        img: '/images/lamp.png',
+    },
+]
+
 export const Navbar = ({ onLoginClick, onRegisterClick, onSearch, cartItemsCount, onCartClick }) => {
-    // Estado para controlar menú desplegable de Hogar
     const [isHomeOpen, setIsHomeOpen] = useState(false)
-    // Estado para controlar menú desplegable de Oficina
     const [isOfficeOpen, setIsOfficeOpen] = useState(false)
-    /*
-    ========================================================
-    CATEGORÍAS DEL CATÁLOGO
-    ========================================================
-    Se definen las categorías disponibles para cada tipo
-    de catálogo del sistema (hogar y oficina)
-    */
-    const categories = {
-        hogar: [
-            'Sala', 'Comedores', 'Lámparas', 'Mesas', 'Camas',
-            'Sillones', 'Sofás', 'Sillas', 'Estantes', 'Cajones',
-            'Nocheros', 'Repisas'
-        ],
-        oficina: [
-            'Escritorios', 'Sillas', 'Lámparas', 'Repisas',
-            'Puertas', 'Ventanas', 'Sofás'
-        ]
-    }
+
     return (
-        /*
-        ====================================================
-        CONTENEDOR PRINCIPAL DE LA NAVBAR
-        ====================================================
-        */
         <nav
             className="glass"
             style={{
@@ -55,25 +47,20 @@ export const Navbar = ({ onLoginClick, onRegisterClick, onSearch, cartItemsCount
                 position: 'sticky',
                 top: 0,
                 zIndex: 1000,
-                borderBottom: '1px solid var(--glass-border)'
+                borderBottom: '1px solid var(--glass-border)',
             }}
         >
             <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                {/* LOGO + MENÚ PRINCIPAL */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '3rem' }}>
-                    {/* LOGO DEL SISTEMA */}
                     <div style={{ fontSize: '1.75rem', fontWeight: '800', letterSpacing: '-1px', color: 'var(--secondary)' }}>
                         NEO<span style={{ color: 'var(--primary-dark)' }}>GEST</span>
                     </div>
-                    {/* MENÚ PRINCIPAL DE NAVEGACIÓN */}
                     <ul style={{ display: 'flex', gap: '2rem', listStyle: 'none', alignItems: 'center' }}>
-                        {/* LINK INICIO */}
                         <li>
                             <a href="#inicio" className="menu-link" style={{ fontWeight: 600 }}>
                                 Inicio
                             </a>
                         </li>
-                        {/* MENÚ DESPLEGABLE HOGAR */}
                         <li
                             className="nav-dropdown"
                             onMouseEnter={() => setIsHomeOpen(true)}
@@ -81,19 +68,16 @@ export const Navbar = ({ onLoginClick, onRegisterClick, onSearch, cartItemsCount
                         >
                             <a href="#catalogo" className="menu-link" style={{ fontWeight: 600 }}>
                                 Hogar
-                                <i className="fas fa-chevron-down" style={{ fontSize: '0.7rem' }}></i>
                             </a>
-                            {/* CONTENIDO DEL DROPDOWN */}
                             <div
                                 className="nav-dropdown-content"
                                 style={{
                                     display: isHomeOpen ? 'grid' : 'none',
                                     gridTemplateColumns: 'repeat(2, 1fr)',
-                                    width: '400px'
+                                    width: '400px',
                                 }}
                             >
-                                {/* LISTA DE CATEGORÍAS HOGAR */}
-                                {categories.hogar.map(item => (
+                                {NAV_CATEGORIES.hogar.map((item) => (
                                     <a
                                         key={item}
                                         href={`#${item.toLowerCase()}`}
@@ -105,7 +89,6 @@ export const Navbar = ({ onLoginClick, onRegisterClick, onSearch, cartItemsCount
                                 ))}
                             </div>
                         </li>
-                        {/* MENÚ DESPLEGABLE OFICINA */}
                         <li
                             className="nav-dropdown"
                             onMouseEnter={() => setIsOfficeOpen(true)}
@@ -113,14 +96,12 @@ export const Navbar = ({ onLoginClick, onRegisterClick, onSearch, cartItemsCount
                         >
                             <a href="#catalogo" className="menu-link" style={{ fontWeight: 600 }}>
                                 Oficina
-                                <i className="fas fa-chevron-down" style={{ fontSize: '0.7rem' }}></i>
                             </a>
                             <div
                                 className="nav-dropdown-content"
                                 style={{ display: isOfficeOpen ? 'grid' : 'none' }}
                             >
-                                {/* LISTA DE CATEGORÍAS OFICINA */}
-                                {categories.oficina.map(item => (
+                                {NAV_CATEGORIES.oficina.map((item) => (
                                     <a
                                         key={item}
                                         href={`#${item.toLowerCase()}`}
@@ -132,21 +113,18 @@ export const Navbar = ({ onLoginClick, onRegisterClick, onSearch, cartItemsCount
                                 ))}
                             </div>
                         </li>
-                        {/* LINKS INFORMATIVOS */}
                         <li><a href="#nosotros" className="menu-link" style={{ fontWeight: 600 }}>Nosotros</a></li>
                         <li><a href="#contacto" className="menu-link" style={{ fontWeight: 600 }}>Contacto</a></li>
                     </ul>
                 </div>
-                {/* SECCIÓN DERECHA: BUSCADOR + CARRITO + LOGIN */}
                 <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
-                    {/* BUSCADOR DE PRODUCTOS */}
                     <div style={{ position: 'relative' }}>
                         <input
                             type="text"
                             placeholder="Buscar muebles..."
                             className="input-premium"
                             style={{ width: '200px', paddingRight: '2.5rem' }}
-                            onChange={(e) => onSearch(e.target.value)}
+                            onChange={(event) => onSearch(event.target.value)}
                         />
                         <span
                             style={{
@@ -154,19 +132,17 @@ export const Navbar = ({ onLoginClick, onRegisterClick, onSearch, cartItemsCount
                                 right: '1rem',
                                 top: '50%',
                                 transform: 'translateY(-50%)',
-                                opacity: 0.5
+                                opacity: 0.5,
                             }}
                         >
-                            🔍
+                            {'\uD83D\uDD0D'}
                         </span>
                     </div>
-                    {/* ICONO DEL CARRITO */}
                     <div
                         onClick={onCartClick}
                         style={{ position: 'relative', cursor: 'pointer', fontSize: '1.2rem' }}
                     >
-                        🛒
-                        {/* CONTADOR DE PRODUCTOS */}
+                        {'\uD83D\uDED2'}
                         {cartItemsCount > 0 && (
                             <span
                                 style={{
@@ -179,14 +155,13 @@ export const Navbar = ({ onLoginClick, onRegisterClick, onSearch, cartItemsCount
                                     fontWeight: 'bold',
                                     padding: '2px 6px',
                                     borderRadius: '50%',
-                                    border: '2px solid white'
+                                    border: '2px solid white',
                                 }}
                             >
                                 {cartItemsCount}
                             </span>
                         )}
                     </div>
-                    {/* BOTÓN LOGIN */}
                     <button
                         onClick={onLoginClick}
                         className="btn btn-outline"
@@ -194,7 +169,6 @@ export const Navbar = ({ onLoginClick, onRegisterClick, onSearch, cartItemsCount
                     >
                         Login
                     </button>
-                    {/* BOTÓN REGISTRO */}
                     <button
                         onClick={onRegisterClick}
                         className="btn btn-primary"
@@ -207,64 +181,23 @@ export const Navbar = ({ onLoginClick, onRegisterClick, onSearch, cartItemsCount
         </nav>
     )
 }
-/*
-========================================================
-COMPONENTE HERO (SLIDER PRINCIPAL)
-========================================================
-Este componente representa la sección principal de la
-landing page con un slider automático.
-Características:
-- Cambio automático de imágenes
-- Texto promocional
-- Botón de acceso al catálogo
-*/
+
 export const Hero = () => {
-    // Estado del slide actual
     const [currentSlide, setCurrentSlide] = useState(0)
-    /*
-    LISTA DE SLIDES DEL CARRUSEL
-    */
-    const slides = [
-        {
-            title: 'Diseño Minimalista para tu Hogar',
-            desc: 'Explora la elegancia funcional de nuestra nueva colección Nano Banana.',
-            img: '/images/hero.png'
-        },
-        {
-            title: 'Tu Oficina, Tu Santuario',
-            desc: 'Eficiencia y confort en cada detalle con acabados premium.',
-            img: '/images/comedor.png'
-        },
-        {
-            title: 'Confort sin Límites',
-            desc: 'Sofás y camas diseñados para el descanso definitivo.',
-            img: '/images/sofa.png'
-        },
-        {
-            title: 'Detalles que Enamoran',
-            desc: 'Lámparas y accesorios que transforman cualquier espacio.',
-            img: '/images/lamp.png'
-        }
-    ]
-    /*
-    ====================================================
-    SLIDER AUTOMÁTICO
-    ====================================================
-    Cambia de slide cada 5 segundos
-    */
+
     useEffect(() => {
         const timer = setInterval(() => {
-            setCurrentSlide((prev) => (prev + 1) % slides.length)
+            setCurrentSlide((current) => (current + 1) % HERO_SLIDES.length)
         }, 5000)
         return () => clearInterval(timer)
     }, [])
+
     return (
         <div className="container">
             <div className="slider-container animate-fade">
-                {/* GENERACIÓN DE LOS SLIDES */}
-                {slides.map((slide, index) => (
+                {HERO_SLIDES.map((slide, index) => (
                     <div
-                        key={index}
+                        key={slide.title}
                         className={`slide ${index === currentSlide ? 'active' : ''}`}
                     >
                         <div className="slide-overlay"></div>
@@ -273,14 +206,13 @@ export const Hero = () => {
                             alt={slide.title}
                             className="slide-image"
                         />
-                        {/* TEXTO DEL SLIDE */}
                         <div
                             style={{
                                 position: 'absolute',
                                 left: '4rem',
                                 zIndex: 2,
                                 color: 'white',
-                                maxWidth: '500px'
+                                maxWidth: '500px',
                             }}
                         >
                             <h1 style={{ fontSize: '4rem', marginBottom: '1rem', lineHeight: 1.1 }}>
@@ -290,16 +222,15 @@ export const Hero = () => {
                                 {slide.desc}
                             </p>
                             <a href="#catalogo" className="btn btn-primary">
-                                Ver Colección ➜
+                                Ver Coleccion {'\u2192'}
                             </a>
                         </div>
                     </div>
                 ))}
-                {/* CONTROLES DEL SLIDER */}
                 <div className="slider-controls">
-                    {slides.map((_, index) => (
+                    {HERO_SLIDES.map((slide, index) => (
                         <button
-                            key={index}
+                            key={slide.title}
                             onClick={() => setCurrentSlide(index)}
                             style={{
                                 width: '12px',
@@ -310,8 +241,9 @@ export const Hero = () => {
                                     ? 'var(--primary)'
                                     : 'rgba(255,255,255,0.3)',
                                 cursor: 'pointer',
-                                transition: '0.3s'
+                                transition: '0.3s',
                             }}
+                            aria-label={`Ver slide ${index + 1}`}
                         />
                     ))}
                 </div>
