@@ -90,6 +90,27 @@ export const CartDrawer = ({ isOpen, onClose, items, onRemove, onUpdateQuantity,
 
 const getOrderId = (order) => order?.id || order?.idPedido
 
+const getOrderProductSummary = (order) => {
+    const products = order?.items?.map((item) => item.producto).filter(Boolean) || []
+    if (products.length === 0) {
+        return {
+            imageUrl: '/images/hero.png',
+            label: 'Sin producto',
+            fullLabel: 'Sin producto',
+        }
+    }
+
+    const firstProduct = products[0]
+    const names = products.map((product) => product.nombre).filter(Boolean)
+    const extraCount = Math.max(products.length - 1, 0)
+
+    return {
+        imageUrl: firstProduct.imagen_url || '/images/hero.png',
+        label: extraCount > 0 ? `${firstProduct.nombre} +${extraCount} productos` : firstProduct.nombre,
+        fullLabel: names.join(', '),
+    }
+}
+
 const PaymentModal = ({ order, onClose, onSubmit, onCancelOrder, isPaying, isCanceling }) => {
     const [form, setForm] = useState({
         metodo: 'Tarjeta',
@@ -280,14 +301,16 @@ export const OrdersPanel = ({ lastOrder, orders, onPayOrder, onViewPayment, onCa
 
             <PaymentReceipt payment={paymentResult} onDownloadInvoice={onDownloadInvoice} onSendInvoiceEmail={onSendInvoiceEmail} />
 
-            <div style={{ marginTop: '1.5rem', background: '#fff', border: '1px solid #e5e7eb', borderRadius: '0.5rem', overflow: 'hidden' }}>
+            <div style={{ marginTop: '1.5rem', background: '#fff', border: '1px solid #e5e7eb', borderRadius: '0.5rem', overflowX: 'auto' }}>
                 <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid #e5e7eb' }}>
                     <h2 style={{ fontSize: '1.1rem' }}>Mis pedidos recientes</h2>
                 </div>
-                <table className="premium-table">
+                <table className="premium-table orders-table">
                     <thead>
                         <tr>
                             <th>Pedido</th>
+                            <th>Imagen</th>
+                            <th>Producto</th>
                             <th>Estado</th>
                             <th>Total</th>
                             <th>Items</th>
@@ -295,34 +318,43 @@ export const OrdersPanel = ({ lastOrder, orders, onPayOrder, onViewPayment, onCa
                         </tr>
                     </thead>
                     <tbody>
-                        {orders.map((order) => (
-                            <tr key={order.id}>
-                                <td>#{order.id}</td>
-                                <td><span className={`badge ${order.estado === 'Pagado' ? 'badge-paid' : order.estado === 'Pendiente' ? 'badge-pending' : 'badge-cancelled'}`}>{order.estado}</span></td>
-                                <td>{formatPrice(order.total_compra)}</td>
-                                <td>{order.items.length}</td>
-                                <td>
-                                    {order.estado === 'Pendiente' && (
-                                        <div className="order-inline-actions">
-                                            <button type="button" className="table-action" onClick={() => setPaymentOrder(order)}>
-                                                Pagar
+                        {orders.map((order) => {
+                            const productSummary = getOrderProductSummary(order)
+                            return (
+                                <tr key={order.id}>
+                                    <td>#{order.id}</td>
+                                    <td>
+                                        <img className="order-product-thumb" src={productSummary.imageUrl} alt={productSummary.label} />
+                                    </td>
+                                    <td className="order-product-name" title={productSummary.fullLabel}>
+                                        {productSummary.label}
+                                    </td>
+                                    <td><span className={`badge ${order.estado === 'Pagado' ? 'badge-paid' : order.estado === 'Pendiente' ? 'badge-pending' : 'badge-cancelled'}`}>{order.estado}</span></td>
+                                    <td>{formatPrice(order.total_compra)}</td>
+                                    <td>{order.items.length}</td>
+                                    <td>
+                                        {order.estado === 'Pendiente' && (
+                                            <div className="order-inline-actions">
+                                                <button type="button" className="table-action" onClick={() => setPaymentOrder(order)}>
+                                                    Pagar
+                                                </button>
+                                                <button type="button" className="table-action table-action-danger" onClick={() => onCancelOrder(order)} disabled={cancelingOrderId === order.id}>
+                                                    {cancelingOrderId === order.id ? 'Cancelando...' : 'Cancelar'}
+                                                </button>
+                                            </div>
+                                        )}
+                                        {order.estado === 'Pagado' && (
+                                            <button type="button" className="table-action" onClick={() => onViewPayment(order)}>
+                                                Comprobante
                                             </button>
-                                            <button type="button" className="table-action table-action-danger" onClick={() => onCancelOrder(order)} disabled={cancelingOrderId === order.id}>
-                                                {cancelingOrderId === order.id ? 'Cancelando...' : 'Cancelar'}
-                                            </button>
-                                        </div>
-                                    )}
-                                    {order.estado === 'Pagado' && (
-                                        <button type="button" className="table-action" onClick={() => onViewPayment(order)}>
-                                            Comprobante
-                                        </button>
-                                    )}
-                                </td>
-                            </tr>
-                        ))}
+                                        )}
+                                    </td>
+                                </tr>
+                            )
+                        })}
                         {orders.length === 0 && (
                             <tr>
-                                <td colSpan="5" style={{ textAlign: 'center', color: '#64748b' }}>Todavia no tienes pedidos.</td>
+                                <td colSpan="7" style={{ textAlign: 'center', color: '#64748b' }}>Todavia no tienes pedidos.</td>
                             </tr>
                         )}
                     </tbody>
