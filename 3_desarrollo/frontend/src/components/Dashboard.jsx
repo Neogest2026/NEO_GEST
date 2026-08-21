@@ -99,8 +99,8 @@ const Dashboard = ({ onLogout, currentUser }) => {
 
     const renderUsuarios = () => (
         <div className="admin-two-column">
-            <section style={{ background: '#fff', borderRadius: '0.75rem', padding: '1.5rem', boxShadow: 'var(--shadow)' }}>
-                <h2 style={{ fontSize: '1.2rem', marginBottom: '1rem', color: '#1a1a1a' }}>Registrar empleado</h2>
+            <section style={{ background: 'var(--surface)', borderRadius: '0.75rem', padding: '1.5rem', boxShadow: 'var(--shadow)', border: '1px solid var(--border)' }}>
+                <h2 style={{ fontSize: '1.2rem', marginBottom: '1rem', color: 'var(--text-strong)' }}>Registrar empleado</h2>
                 <form onSubmit={crearEmpleado} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
                     <input className="auth-input" value={empleadoForm.nombre_empleado} placeholder="Nombre del empleado" required minLength={3} onChange={(event) => updateEmpleadoForm('nombre_empleado', event.target.value)} />
                     <input className="auth-input" value={empleadoForm.email} type="email" placeholder="Correo" required onChange={(event) => updateEmpleadoForm('email', event.target.value)} />
@@ -119,8 +119,8 @@ const Dashboard = ({ onLogout, currentUser }) => {
                 </form>
             </section>
 
-            <section style={{ background: '#fff', borderRadius: '0.75rem', padding: '1.5rem', boxShadow: 'var(--shadow)', overflowX: 'auto' }}>
-                <h2 style={{ fontSize: '1.2rem', marginBottom: '1rem', color: '#1a1a1a' }}>Empleados registrados</h2>
+            <section style={{ background: 'var(--surface)', borderRadius: '0.75rem', padding: '1.5rem', boxShadow: 'var(--shadow)', border: '1px solid var(--border)', overflowX: 'auto' }}>
+                <h2 style={{ fontSize: '1.2rem', marginBottom: '1rem', color: 'var(--text-strong)' }}>Empleados registrados</h2>
                 <table className="premium-table">
                     <thead>
                         <tr>
@@ -143,7 +143,7 @@ const Dashboard = ({ onLogout, currentUser }) => {
                         ))}
                         {empleados.length === 0 && (
                             <tr>
-                                <td colSpan="5" style={{ textAlign: 'center', color: '#718096' }}>No hay empleados registrados</td>
+                                <td colSpan="5" style={{ textAlign: 'center', color: 'var(--text-light)' }}>No hay empleados registrados</td>
                             </tr>
                         )}
                     </tbody>
@@ -178,7 +178,7 @@ const Dashboard = ({ onLogout, currentUser }) => {
                     <h1 className="resumen-title">{activeTab === 'dashboard' ? 'Resumen General' : activeLabel}</h1>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                         <div style={{ textAlign: 'right' }}>
-                            <p style={{ fontWeight: 600, fontSize: '0.9rem', color: '#1a1a1a' }}>Hola, <span style={{ fontWeight: 800 }}>Administrador</span></p>
+                            <p style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-strong)' }}>Hola, <span style={{ fontWeight: 800 }}>Administrador</span></p>
                             {currentUser?.email && <p style={{ fontSize: '0.78rem', color: '#64748b' }}>{currentUser.email}</p>}
                         </div>
                         <div style={{ width: 40, height: 40, borderRadius: '50%', backgroundColor: '#e2e8f0' }}></div>
@@ -199,8 +199,8 @@ const Dashboard = ({ onLogout, currentUser }) => {
                             ))}
                         </div>
 
-                        <div style={{ background: '#fff', borderRadius: '0.75rem', padding: '2rem', boxShadow: 'var(--shadow)' }}>
-                            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1.5rem', color: '#1a1a1a' }}>Ultimos Pedidos</h2>
+                        <div style={{ background: 'var(--surface)', borderRadius: '0.75rem', padding: '2rem', boxShadow: 'var(--shadow)', border: '1px solid var(--border)' }}>
+                            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1.5rem', color: 'var(--text-strong)' }}>Ultimos Pedidos</h2>
                             <table className="premium-table">
                                 <thead>
                                     <tr>
@@ -238,9 +238,9 @@ const Dashboard = ({ onLogout, currentUser }) => {
                 {activeTab === 'usuarios' && renderUsuarios()}
 
                 {['pedido', 'facturacion', 'devolucion', 'inventario', 'envios', 'config'].includes(activeTab) && (
-                    <div style={{ background: '#fff', borderRadius: '0.75rem', padding: '3rem', textAlign: 'center', boxShadow: 'var(--shadow)' }}>
-                        <h2 style={{ color: '#1a1a1a', marginBottom: '1rem' }}>Modulo de {activeLabel}</h2>
-                        <p style={{ color: '#718096' }}>Este modulo esta siendo actualizado con el nuevo diseno de alta fidelidad.</p>
+                    <div style={{ background: 'var(--surface)', borderRadius: '0.75rem', padding: '3rem', textAlign: 'center', boxShadow: 'var(--shadow)', border: '1px solid var(--border)' }}>
+                        <h2 style={{ color: 'var(--text-strong)', marginBottom: '1rem' }}>Modulo de {activeLabel}</h2>
+                        <p style={{ color: 'var(--text-light)' }}>Este modulo esta siendo actualizado con el nuevo diseno de alta fidelidad.</p>
                     </div>
                 )}
             </main>

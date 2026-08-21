@@ -3,19 +3,19 @@ import { useEffect, useState } from 'react'
 const formatPrice = (price) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(price || 0)
 
 export const Footer = () => (
-    <footer style={{ background: 'var(--secondary)', color: 'white', padding: '5rem 0 2rem' }}>
+    <footer style={{ background: 'var(--footer-bg)', color: 'var(--footer-text)', padding: '5rem 0 2rem' }}>
         <div className="container" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '4rem' }}>
             <div>
                 <div style={{ fontSize: '1.75rem', fontWeight: '800', marginBottom: '1.5rem' }}>
                     NEO<span style={{ color: 'var(--primary)' }}>GEST</span>
                 </div>
-                <p style={{ color: '#94a3b8', fontSize: '0.9rem', lineHeight: 1.6 }}>
+                <p style={{ color: 'var(--footer-muted)', fontSize: '0.9rem', lineHeight: 1.6 }}>
                     Redefiniendo el diseno de interiores en Colombia con muebles premium inspirados en la estetica minimalista y moderna.
                 </p>
             </div>
             <div>
                 <h4 style={{ marginBottom: '1.5rem' }}>Explorar</h4>
-                <ul style={{ listStyle: 'none', color: '#94a3b8', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <ul style={{ listStyle: 'none', color: 'var(--footer-muted)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                     <li><a href="#catalogo" style={{ color: 'inherit', textDecoration: 'none' }}>Catalogo Hogar</a></li>
                     <li><a href="#catalogo" style={{ color: 'inherit', textDecoration: 'none' }}>Catalogo Oficina</a></li>
                     <li><a href="#catalogo" style={{ color: 'inherit', textDecoration: 'none' }}>Nuevos Arrivos</a></li>
@@ -24,7 +24,7 @@ export const Footer = () => (
             </div>
             <div>
                 <h4 style={{ marginBottom: '1.5rem' }}>Servicio al Cliente</h4>
-                <ul style={{ listStyle: 'none', color: '#94a3b8', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <ul style={{ listStyle: 'none', color: 'var(--footer-muted)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                     <li><a href="#" style={{ color: 'inherit', textDecoration: 'none' }}>Envios (Servientrega)</a></li>
                     <li><a href="#" style={{ color: 'inherit', textDecoration: 'none' }}>Terminos y Condiciones</a></li>
                     <li><a href="#" style={{ color: 'inherit', textDecoration: 'none' }}>Preguntas Frecuentes</a></li>
@@ -33,11 +33,11 @@ export const Footer = () => (
             </div>
             <div>
                 <h4 style={{ marginBottom: '1.5rem' }}>Contacto</h4>
-                <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '1rem' }}>Bogota, Colombia</p>
-                <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '1rem' }}>+57 300 123 4567</p>
+                <p style={{ color: 'var(--footer-muted)', fontSize: '0.9rem', marginBottom: '1rem' }}>Bogota, Colombia</p>
+                <p style={{ color: 'var(--footer-muted)', fontSize: '0.9rem', marginBottom: '1rem' }}>+57 300 123 4567</p>
             </div>
         </div>
-        <div className="container" style={{ marginTop: '4rem', paddingTop: '2rem', borderTop: '1px solid rgba(255,255,255,0.1)', textAlign: 'center', color: '#64748b', fontSize: '0.8rem' }}>
+        <div className="container" style={{ marginTop: '4rem', paddingTop: '2rem', borderTop: '1px solid var(--footer-border)', textAlign: 'center', color: 'var(--footer-muted)', fontSize: '0.8rem' }}>
             (c) 2026 NEOGEST MODERNA. Todos los derechos reservados.
         </div>
     </footer>
@@ -109,6 +109,16 @@ const getOrderProductSummary = (order) => {
         label: extraCount > 0 ? `${firstProduct.nombre} +${extraCount} productos` : firstProduct.nombre,
         fullLabel: names.join(', '),
     }
+}
+
+const getOrderStatusBadgeClass = (status) => {
+    const statusClasses = {
+        Pagado: 'badge-paid',
+        Pendiente: 'badge-pending',
+        Cancelado: 'badge-cancelled',
+        Vencido: 'badge-expired',
+    }
+    return statusClasses[status] || 'badge-neutral'
 }
 
 const PaymentModal = ({ order, onClose, onSubmit, onCancelOrder, isPaying, isCanceling }) => {
@@ -301,8 +311,8 @@ export const OrdersPanel = ({ lastOrder, orders, onPayOrder, onViewPayment, onCa
 
             <PaymentReceipt payment={paymentResult} onDownloadInvoice={onDownloadInvoice} onSendInvoiceEmail={onSendInvoiceEmail} />
 
-            <div style={{ marginTop: '1.5rem', background: '#fff', border: '1px solid #e5e7eb', borderRadius: '0.5rem', overflowX: 'auto' }}>
-                <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid #e5e7eb' }}>
+            <div style={{ marginTop: '1.5rem', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.5rem', overflowX: 'auto' }}>
+                <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid var(--border)' }}>
                     <h2 style={{ fontSize: '1.1rem' }}>Mis pedidos recientes</h2>
                 </div>
                 <table className="premium-table orders-table">
@@ -329,7 +339,7 @@ export const OrdersPanel = ({ lastOrder, orders, onPayOrder, onViewPayment, onCa
                                     <td className="order-product-name" title={productSummary.fullLabel}>
                                         {productSummary.label}
                                     </td>
-                                    <td><span className={`badge ${order.estado === 'Pagado' ? 'badge-paid' : order.estado === 'Pendiente' ? 'badge-pending' : 'badge-cancelled'}`}>{order.estado}</span></td>
+                                    <td><span className={`badge ${getOrderStatusBadgeClass(order.estado)}`}>{order.estado}</span></td>
                                     <td>{formatPrice(order.total_compra)}</td>
                                     <td>{order.items.length}</td>
                                     <td>

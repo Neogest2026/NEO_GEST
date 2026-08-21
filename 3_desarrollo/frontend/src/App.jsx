@@ -6,6 +6,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
 
 function App() {
     const [view, setView] = useState(window.location.hash === '#admin' ? 'admin-login' : 'home')
+    const [theme, setTheme] = useState(() => localStorage.getItem('neogest_theme') || 'light')
     const [isRegisterOpen, setIsRegisterOpen] = useState(false)
     const [isCartOpen, setIsCartOpen] = useState(false)
     const [searchTerm, setSearchTerm] = useState('')
@@ -35,6 +36,15 @@ function App() {
     }), [currentUser?.token])
 
     const apiUrl = (path) => path?.startsWith('http') ? path : `${API_URL}${path}`
+
+    useEffect(() => {
+        document.documentElement.dataset.theme = theme
+        localStorage.setItem('neogest_theme', theme)
+    }, [theme])
+
+    const toggleTheme = () => {
+        setTheme((currentTheme) => currentTheme === 'dark' ? 'light' : 'dark')
+    }
 
     const loadCart = useCallback(async (userId) => {
         const response = await fetch(`${API_URL}/api/v1/carrito/${userId}`, { headers: authHeaders() })
@@ -288,6 +298,11 @@ function App() {
 
     const logout = () => {
         setCurrentUser(null)
+        setCartItems([])
+        setOrders([])
+        setLastOrder(null)
+        setPaymentResult(null)
+        setPaymentPromptOrder(null)
         localStorage.removeItem('neogest_user')
         window.location.hash = ''
         setView('home')
@@ -298,7 +313,7 @@ function App() {
         <div className="app-container">
             {message && <div className={`toast-message ${message.type}`}>{message.text}</div>}
             {view === 'home' && <>
-                <Navbar onLoginClick={() => setView('login')} onRegisterClick={() => setIsRegisterOpen(true)} onSearch={setSearchTerm} cartItemsCount={cartItems.reduce((total, item) => total + item.cantidad, 0)} onCartClick={() => setIsCartOpen(true)} />
+                <Navbar onLoginClick={() => setView('login')} onRegisterClick={() => setIsRegisterOpen(true)} onSearch={setSearchTerm} cartItemsCount={cartItems.reduce((total, item) => total + item.cantidad, 0)} onCartClick={() => setIsCartOpen(true)} currentUser={currentUser} onLogout={logout} theme={theme} onToggleTheme={toggleTheme} />
                 <Hero />
                 <Catalog searchTerm={searchTerm} addToCart={addToCart} reloadKey={catalogReloadKey} />
                 {currentUser?.role === 'cliente' && <OrdersPanel lastOrder={lastOrder} orders={orders} onPayOrder={payOrder} onViewPayment={viewPayment} onCancelOrder={cancelOrder} onDownloadInvoice={downloadInvoice} onSendInvoiceEmail={sendInvoiceEmail} isPaying={isPaying} cancelingOrderId={cancelingOrderId} paymentResult={paymentResult} paymentPromptOrder={paymentPromptOrder} onPaymentPromptClose={() => setPaymentPromptOrder(null)} />}

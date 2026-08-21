@@ -29,6 +29,7 @@ $adminLogin = Invoke-Json -Method "POST" -Uri "$ApiUrl/login" -Body @{
     password = "admin123"
 }
 if (-not $adminLogin.access_token) { throw "Login admin no devolvio token" }
+if (-not $adminLogin.nombre) { throw "Login admin no devolvio nombre visible" }
 
 $empleado = Invoke-Json -Method "POST" -Uri "$ApiUrl/api/v1/empleados" -Token $adminLogin.access_token -Body @{
     email = "empleado_smoke_$RunId@neogest.local"
@@ -75,6 +76,7 @@ $nuevoClienteLogin = Invoke-Json -Method "POST" -Uri "$ApiUrl/login" -Body @{
     email = "cliente_smoke_$RunId@neogest.local"
     password = "123456"
 }
+if ($nuevoClienteLogin.nombre -ne "Cliente Smoke") { throw "Login cliente no devolvio nombre completo" }
 
 $carrito = Invoke-Json -Method "POST" -Uri "$ApiUrl/api/v1/carrito/items" -Token $nuevoClienteLogin.access_token -Body @{
     usuario_id = $registro.idUsuario

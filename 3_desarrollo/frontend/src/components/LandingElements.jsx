@@ -35,7 +35,14 @@ const HERO_SLIDES = [
     },
 ]
 
-export const Navbar = ({ onLoginClick, onRegisterClick, onSearch, cartItemsCount, onCartClick }) => {
+const getDisplayName = (user) => {
+    if (!user) return ''
+    const rawName = user.name || user.email || ''
+    const firstName = rawName.trim().split(/\s+/)[0]
+    return firstName || rawName.split('@')[0] || 'Usuario'
+}
+
+export const Navbar = ({ onLoginClick, onRegisterClick, onSearch, cartItemsCount, onCartClick, currentUser, onLogout, theme, onToggleTheme }) => {
     const [isHomeOpen, setIsHomeOpen] = useState(false)
     const [isOfficeOpen, setIsOfficeOpen] = useState(false)
 
@@ -138,6 +145,15 @@ export const Navbar = ({ onLoginClick, onRegisterClick, onSearch, cartItemsCount
                             {'\uD83D\uDD0D'}
                         </span>
                     </div>
+                    <button
+                        type="button"
+                        className="theme-toggle"
+                        onClick={onToggleTheme}
+                        aria-label={theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+                        title={theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}
+                    >
+                        <span>{theme === 'dark' ? '\u2600' : '\u263E'}</span>
+                    </button>
                     <div
                         onClick={onCartClick}
                         style={{ position: 'relative', cursor: 'pointer', fontSize: '1.2rem' }}
@@ -162,20 +178,31 @@ export const Navbar = ({ onLoginClick, onRegisterClick, onSearch, cartItemsCount
                             </span>
                         )}
                     </div>
-                    <button
-                        onClick={onLoginClick}
-                        className="btn btn-outline"
-                        style={{ padding: '0.5rem 1.25rem' }}
-                    >
-                        Login
-                    </button>
-                    <button
-                        onClick={onRegisterClick}
-                        className="btn btn-primary"
-                        style={{ padding: '0.5rem 1.25rem' }}
-                    >
-                        Unirse
-                    </button>
+                    {currentUser ? (
+                        <div className="user-session">
+                            <span>Bienvenido, <strong>{getDisplayName(currentUser)}</strong></span>
+                            <button type="button" className="session-logout" onClick={onLogout}>
+                                Salir
+                            </button>
+                        </div>
+                    ) : (
+                        <>
+                            <button
+                                onClick={onLoginClick}
+                                className="btn btn-outline"
+                                style={{ padding: '0.5rem 1.25rem' }}
+                            >
+                                Login
+                            </button>
+                            <button
+                                onClick={onRegisterClick}
+                                className="btn btn-primary"
+                                style={{ padding: '0.5rem 1.25rem' }}
+                            >
+                                Unirse
+                            </button>
+                        </>
+                    )}
                 </div>
             </div>
         </nav>

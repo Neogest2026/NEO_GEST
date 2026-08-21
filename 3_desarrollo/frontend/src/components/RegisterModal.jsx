@@ -88,7 +88,7 @@ const RegisterModal = ({ onClose, onRegistered }) => {
                     fontWeight: 700,
                     marginBottom: '2rem',
                     textAlign: 'left',
-                    color: '#111827'
+                    color: 'var(--text-strong)'
                 }}>
                     Registrarse en Neogest
                 </h2>
@@ -112,7 +112,7 @@ const RegisterModal = ({ onClose, onRegistered }) => {
                         <button
                             type="button"
                             className="btn-auth-primary"
-                            style={{ margin: 0, background: '#f3f4f6', color: '#111827', border: '1px solid #e5e7eb' }}
+                            style={{ margin: 0, background: 'var(--surface-muted)', color: 'var(--text-strong)', border: '1px solid var(--border)' }}
                             onClick={onClose}
                             disabled={isSubmitting}
                         >

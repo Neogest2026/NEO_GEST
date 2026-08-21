@@ -115,14 +115,14 @@ const Catalog = ({ searchTerm, addToCart, reloadKey = 0 }) => {
                     zIndex: 2100,
                     padding: '2rem'
                 }}>
-                    <div style={{ background: '#fff', width: 'min(920px, 100%)', borderRadius: '0.75rem', overflow: 'hidden', boxShadow: 'var(--shadow-lg)' }}>
+                    <div style={{ background: 'var(--surface)', width: 'min(920px, 100%)', borderRadius: '0.75rem', overflow: 'hidden', boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border)' }}>
                         <div className="product-detail-grid">
                             <img src={selectedProduct.imagen_url || '/images/hero.png'} alt={selectedProduct.nombre} style={{ width: '100%', height: '100%', minHeight: '420px', objectFit: 'cover' }} />
                             <div style={{ padding: '2rem', position: 'relative' }}>
-                                <button onClick={closeProductDetail} style={{ position: 'absolute', top: '1rem', right: '1rem', border: 'none', background: '#f3f4f6', borderRadius: '999px', width: 36, height: 36, cursor: 'pointer' }}>x</button>
+                                <button onClick={closeProductDetail} style={{ position: 'absolute', top: '1rem', right: '1rem', border: 'none', background: 'var(--surface-muted)', color: 'var(--text-strong)', borderRadius: '999px', width: 36, height: 36, cursor: 'pointer' }}>x</button>
                                 <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--primary-dark)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{selectedProduct.categoria?.nombre || 'Sin categoria'}</span>
-                                <h2 style={{ fontSize: '2rem', margin: '0.75rem 2rem 1rem 0', color: '#111827' }}>{selectedProduct.nombre}</h2>
-                                <p style={{ color: '#4b5563', marginBottom: '1.25rem' }}>{selectedProduct.descripcion || 'Sin descripcion disponible.'}</p>
+                                <h2 style={{ fontSize: '2rem', margin: '0.75rem 2rem 1rem 0', color: 'var(--text-strong)' }}>{selectedProduct.nombre}</h2>
+                                <p style={{ color: 'var(--text-light)', marginBottom: '1.25rem' }}>{selectedProduct.descripcion || 'Sin descripcion disponible.'}</p>
                                 <div style={{ display: 'grid', gap: '0.75rem', marginBottom: '1.5rem' }}>
                                     <p><strong>Precio:</strong> {formatPrice(selectedProduct.precio_unitario)}</p>
                                     <p><strong>Dimensiones:</strong> {selectedProduct.dimensiones || 'No especificadas'}</p>

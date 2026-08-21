@@ -32,7 +32,8 @@ const Login = ({ onLoginSuccess, onBack, isAdminLogin }) => {
                 userId: data.idUsuario,
                 token: data.access_token,
                 tokenType: data.token_type,
-                email
+                email: data.email || email,
+                name: data.nombre || data.email || email,
             })
         } catch (requestError) {
             console.error('Error conectando con API:', requestError)
