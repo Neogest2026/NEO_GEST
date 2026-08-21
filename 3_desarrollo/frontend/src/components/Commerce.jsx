@@ -172,8 +172,17 @@ const PaymentModal = ({ order, onClose, onSubmit, isPaying }) => {
     )
 }
 
-const PaymentReceipt = ({ payment }) => {
+const PaymentReceipt = ({ payment, onDownloadInvoice, onSendInvoiceEmail }) => {
+    const [email, setEmail] = useState('')
+    const [isSending, setIsSending] = useState(false)
+
     if (!payment) return null
+
+    const handleSendEmail = async () => {
+        setIsSending(true)
+        await onSendInvoiceEmail(payment, email.trim())
+        setIsSending(false)
+    }
 
     return (
         <div className="payment-receipt">
@@ -181,6 +190,8 @@ const PaymentReceipt = ({ payment }) => {
                 <span className="order-kicker">Comprobante</span>
                 <h2>Pedido #{payment.pedido_id}</h2>
                 <p>Pago: {payment.estado_transaccion}</p>
+                {payment.factura?.empresa_nombre && <p>{payment.factura.empresa_nombre}</p>}
+                {payment.factura?.empresa_nit && <p>{payment.factura.empresa_nit}</p>}
             </div>
             <div className="receipt-grid">
                 <span>Metodo</span>
@@ -191,12 +202,34 @@ const PaymentReceipt = ({ payment }) => {
                 <strong>{payment.factura?.numero_factura || 'No generada'}</strong>
                 <span>RUC/NIT</span>
                 <strong>{payment.factura?.ruc_nit_cliente || 'No aplica'}</strong>
+                <span>Cliente</span>
+                <strong>{payment.factura?.cliente_nombre || 'No aplica'}</strong>
+                <span>Direccion</span>
+                <strong>{payment.factura?.cliente_direccion || 'No aplica'}</strong>
             </div>
+            {payment.factura && (
+                <div className="receipt-actions">
+                    <button type="button" className="btn btn-primary" onClick={() => onDownloadInvoice(payment)}>
+                        Descargar PDF
+                    </button>
+                    <div className="receipt-email">
+                        <input
+                            type="email"
+                            value={email}
+                            onChange={(event) => setEmail(event.target.value)}
+                            placeholder="correo@ejemplo.com"
+                        />
+                        <button type="button" className="table-action" onClick={handleSendEmail} disabled={isSending}>
+                            {isSending ? 'Enviando...' : 'Enviar por correo'}
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
 
-export const OrdersPanel = ({ lastOrder, orders, onPayOrder, onViewPayment, isPaying, paymentResult, paymentPromptOrder, onPaymentPromptClose }) => {
+export const OrdersPanel = ({ lastOrder, orders, onPayOrder, onViewPayment, onDownloadInvoice, onSendInvoiceEmail, isPaying, paymentResult, paymentPromptOrder, onPaymentPromptClose }) => {
     const [paymentOrder, setPaymentOrder] = useState(null)
 
     useEffect(() => {
@@ -232,7 +265,7 @@ export const OrdersPanel = ({ lastOrder, orders, onPayOrder, onViewPayment, isPa
                 </div>
             )}
 
-            <PaymentReceipt payment={paymentResult} />
+            <PaymentReceipt payment={paymentResult} onDownloadInvoice={onDownloadInvoice} onSendInvoiceEmail={onSendInvoiceEmail} />
 
             <div style={{ marginTop: '1.5rem', background: '#fff', border: '1px solid #e5e7eb', borderRadius: '0.5rem', overflow: 'hidden' }}>
                 <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid #e5e7eb' }}>

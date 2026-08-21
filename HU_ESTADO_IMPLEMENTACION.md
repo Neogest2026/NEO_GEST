@@ -12,7 +12,7 @@ Este documento compara las pautas del equipo contra el codigo actual del proyect
 | HU-02 Gestion de Empleados | Implementado | Admin rol 1 crea empleados con cargo, usuario rol 2 y trazabilidad en `id_jefe_master`; la ruta esta protegida con JWT. |
 | HU-03 Catalogo y Detalle | Implementado | Lista, filtra, busca, muestra campos requeridos, deshabilita agotados y tiene modal de detalle conectado al backend. |
 | HU-04 Checkout y Pedido | Implementado | El carrito autenticado se confirma como pedido pendiente, migra items a detalle_pedido, guarda precio historico, descuenta stock y limpia carrito con rollback ante errores. |
-| HU-05 Pago y Facturacion | Implementado | Registra pago, cambia pedido aprobado a `Pagado`, genera factura con RUC/NIT y muestra comprobante en frontend. |
+| HU-05 Pago y Facturacion | Implementado | Registra pago, cambia pedido aprobado a `Pagado`, genera factura con RUC/NIT, PDF descargable y envio de comprobante por correo. |
 | HU-06 Gestion de Envios | No implementado | Tabla existe, dashboard muestra placeholder, no hay backend funcional. |
 | HU-07 Auditoria de Inventario | No implementado | Tabla existe, pero no hay endpoints ni actualizacion de stock por movimiento. |
 | HU-08 Gestion de Devoluciones | No implementado | Tabla existe, dashboard muestra placeholder, no hay backend funcional. |
@@ -135,7 +135,11 @@ Implementado:
 - Se evita registrar un segundo pago aprobado para el mismo pedido.
 - `GET /api/v1/pagos/pedido/{pedido_id}` permite consultar el comprobante de un pedido propio.
 - `GET /api/v1/pagos/mis-pagos` lista pagos del cliente autenticado.
-- El frontend permite pagar pedidos pendientes y consultar comprobantes de pedidos pagados.
+- `GET /api/v1/pagos/facturas/{factura_id}/pdf` descarga factura formal en PDF.
+- `POST /api/v1/pagos/facturas/{factura_id}/email` envia el comprobante por SMTP si esta configurado o responde en modo simulado si no hay SMTP.
+- El frontend permite pagar pedidos pendientes, consultar comprobantes, descargar PDF y solicitar envio por correo.
+- La factura PDF incluye datos del emisor, NIT, direccion, cliente, RUC/NIT, direccion fiscal, items y total.
+- Las nuevas facturas usan numeracion configurable con `INVOICE_PREFIX`, por defecto `NG-FE-YYYY-000001`.
 
 Archivos relacionados:
 
@@ -218,6 +222,7 @@ No existe actualmente:
 - Algunas tablas existen en SQL pero no estan modeladas en SQLAlchemy.
 - La base local ya tiene catalogo demo cargado. Si se reinicia la base, volver a ejecutar `3_desarrollo/seed_catalogo_demo.sql`.
 - El pago implementado es simulado/controlado; no integra pasarela real bancaria.
+- El envio de correo es real solo si se configuran variables SMTP en `.env`; sin SMTP se mantiene modo simulado para pruebas.
 - Para restaurar stock demo agotado por pruebas o capturas, usar `4_pruebas/pruebas/reset_stock_demo.ps1`.
 
 ## Pruebas automatizadas

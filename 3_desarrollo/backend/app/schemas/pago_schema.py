@@ -19,6 +19,10 @@ class FacturaResponse(BaseModel):
     ruc_nit_cliente: str
     url_pdf: Optional[str] = None
     fecha_emision: Optional[str] = None
+    cliente_nombre: Optional[str] = None
+    cliente_direccion: Optional[str] = None
+    empresa_nombre: Optional[str] = None
+    empresa_nit: Optional[str] = None
 
 
 class PagoResponse(BaseModel):
@@ -30,3 +34,7 @@ class PagoResponse(BaseModel):
     pedido_id: int
     pedido_estado: str
     factura: Optional[FacturaResponse] = None
+
+
+class EnvioComprobanteRequest(BaseModel):
+    email_destino: Optional[str] = Field(default=None, max_length=100)

@@ -33,6 +33,8 @@ function App() {
         ...(currentUser?.token ? { Authorization: `Bearer ${currentUser.token}` } : {}),
     })
 
+    const apiUrl = (path) => path?.startsWith('http') ? path : `${API_URL}${path}`
+
     const loadCart = async (userId) => {
         const response = await fetch(`${API_URL}/api/v1/carrito/${userId}`, { headers: authHeaders() })
         if (!response.ok) throw new Error('No fue posible cargar el carrito')
@@ -201,6 +203,47 @@ function App() {
         return data
     }
 
+    const downloadInvoice = async (payment) => {
+        if (!payment?.factura?.url_pdf) {
+            showMessage('La factura no tiene PDF disponible', 'error')
+            return
+        }
+        const response = await fetch(apiUrl(payment.factura.url_pdf), { headers: authHeaders() })
+        if (!response.ok) {
+            showMessage('No fue posible descargar la factura', 'error')
+            return
+        }
+        const blob = await response.blob()
+        const url = window.URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        link.download = `${payment.factura.numero_factura}.pdf`
+        document.body.appendChild(link)
+        link.click()
+        link.remove()
+        window.URL.revokeObjectURL(url)
+        showMessage('Factura descargada')
+    }
+
+    const sendInvoiceEmail = async (payment, email) => {
+        if (!payment?.factura?.id) {
+            showMessage('No hay factura para enviar', 'error')
+            return { ok: false }
+        }
+        const response = await fetch(`${API_URL}/api/v1/pagos/facturas/${payment.factura.id}/email`, {
+            method: 'POST',
+            headers: authHeaders(),
+            body: JSON.stringify({ email_destino: email || undefined }),
+        })
+        const data = await response.json()
+        if (!response.ok) {
+            showMessage(data.detail || 'No fue posible enviar la factura', 'error')
+            return { ok: false }
+        }
+        showMessage(data.mensaje || 'Comprobante enviado')
+        return { ok: true, data }
+    }
+
     const handleLogin = (user) => {
         setCurrentUser(user)
         localStorage.setItem('neogest_user', JSON.stringify(user))
@@ -223,7 +266,7 @@ function App() {
                 <Navbar onLoginClick={() => setView('login')} onRegisterClick={() => setIsRegisterOpen(true)} onSearch={setSearchTerm} cartItemsCount={cartItems.reduce((total, item) => total + item.cantidad, 0)} onCartClick={() => setIsCartOpen(true)} />
                 <Hero />
                 <Catalog searchTerm={searchTerm} addToCart={addToCart} reloadKey={catalogReloadKey} />
-                {currentUser?.role === 'cliente' && <OrdersPanel lastOrder={lastOrder} orders={orders} onPayOrder={payOrder} onViewPayment={viewPayment} isPaying={isPaying} paymentResult={paymentResult} paymentPromptOrder={paymentPromptOrder} onPaymentPromptClose={() => setPaymentPromptOrder(null)} />}
+                {currentUser?.role === 'cliente' && <OrdersPanel lastOrder={lastOrder} orders={orders} onPayOrder={payOrder} onViewPayment={viewPayment} onDownloadInvoice={downloadInvoice} onSendInvoiceEmail={sendInvoiceEmail} isPaying={isPaying} paymentResult={paymentResult} paymentPromptOrder={paymentPromptOrder} onPaymentPromptClose={() => setPaymentPromptOrder(null)} />}
                 <Footer />
                 {isRegisterOpen && <RegisterModal onClose={() => setIsRegisterOpen(false)} onRegistered={(text) => showMessage(text)} />}
                 <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} items={cartItems} onRemove={removeCartItem} onUpdateQuantity={updateCartItemQuantity} onCheckout={checkoutCart} isCheckingOut={isCheckingOut} />

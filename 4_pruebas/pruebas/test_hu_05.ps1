@@ -103,6 +103,9 @@ if ($pago.pedido_estado -ne "Pagado") { throw "El pedido no cambio a Pagado" }
 if ($pago.monto -ne $pedidoAprobado.total_compra) { throw "El pago no tomo el total real del pedido" }
 if (-not $pago.factura) { throw "No se genero factura para pago aprobado" }
 if ($pago.factura.ruc_nit_cliente -ne "900123456-7") { throw "La factura no guardo el RUC/NIT del cliente" }
+if (-not $pago.factura.url_pdf) { throw "La factura no devolvio URL de PDF" }
+if (-not $pago.factura.cliente_nombre) { throw "La factura no devolvio datos fiscales del cliente" }
+if (-not $pago.factura.empresa_nit) { throw "La factura no devolvio datos fiscales del emisor" }
 
 $pedidoConsultado = Invoke-Json -Method "GET" -Uri "$ApiUrl/api/v1/pedidos/$($pedidoAprobado.idPedido)" -Token $login.access_token
 if ($pedidoConsultado.estado -ne "Pagado") { throw "La consulta del pedido no refleja estado Pagado" }
@@ -111,6 +114,26 @@ $comprobante = Invoke-Json -Method "GET" -Uri "$ApiUrl/api/v1/pagos/pedido/$($pe
 if ($comprobante.factura.numero_factura -ne $pago.factura.numero_factura) {
     throw "El comprobante consultado no coincide con la factura generada"
 }
+
+$pdfPath = Join-Path $env:TEMP "neogest_factura_$RunId.pdf"
+$headersPath = Join-Path $env:TEMP "neogest_factura_$RunId.headers"
+& curl.exe -sS -L -D $headersPath -o $pdfPath -H "Authorization: Bearer $($login.access_token)" "$ApiUrl$($pago.factura.url_pdf)"
+if ($LASTEXITCODE -ne 0) {
+    throw "No fue posible descargar el PDF de factura"
+}
+$pdfHeaders = Get-Content $headersPath -Raw
+if ($pdfHeaders -notmatch "content-type:\s*application/pdf") {
+    throw "La descarga de factura no devolvio application/pdf"
+}
+if ((Get-Item $pdfPath).Length -lt 1000) {
+    throw "El PDF de factura parece estar incompleto"
+}
+Remove-Item $pdfPath, $headersPath -Force
+
+$envioCorreo = Invoke-Json -Method "POST" -Uri "$ApiUrl/api/v1/pagos/facturas/$($pago.factura.id)/email" -Token $login.access_token -Body @{
+    email_destino = "cliente_pago_$RunId@neogest.local"
+}
+if (-not $envioCorreo.mensaje) { throw "El endpoint de correo no devolvio mensaje" }
 
 Expect-HttpStatus -Name "HU-05 evita pago aprobado duplicado" -ExpectedStatus 409 -Action {
     Invoke-Json -Method "POST" -Uri "$ApiUrl/api/v1/pagos" -Token $login.access_token -Body @{

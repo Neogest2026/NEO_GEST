@@ -341,6 +341,8 @@ Endpoints usados:
 - `POST /api/v1/pagos`: registra pago de un pedido del cliente autenticado.
 - `GET /api/v1/pagos/pedido/{pedido_id}`: consulta comprobante de un pedido.
 - `GET /api/v1/pagos/mis-pagos`: lista pagos del cliente autenticado.
+- `GET /api/v1/pagos/facturas/{factura_id}/pdf`: descarga factura formal en PDF.
+- `POST /api/v1/pagos/facturas/{factura_id}/email`: envia la factura por correo.
 
 Payload de pago:
 
@@ -361,7 +363,10 @@ Reglas implementadas:
 - Si el pago queda `Aprobado`, se crea un registro en `factura` con `ruc_nit_cliente`.
 - Si el pago queda `Rechazado`, el pedido sigue `Pendiente` y no se genera factura.
 - El sistema bloquea un segundo pago aprobado sobre el mismo pedido.
-- El frontend muestra comprobante con metodo, monto, numero de factura y RUC/NIT.
+- Las nuevas facturas usan numeracion configurable con `INVOICE_PREFIX`, por defecto `NG-FE-YYYY-000001`.
+- El frontend muestra comprobante con metodo, monto, numero de factura, RUC/NIT, cliente y datos del emisor.
+- El comprobante se puede descargar como PDF formal.
+- El comprobante se puede enviar por correo: con SMTP configurado se envia realmente; sin SMTP queda en modo simulado para pruebas.
 
 ### 6.6. Dashboard administrativo
 
@@ -391,7 +396,7 @@ Estado actual:
 - Los demas modulos muestran una pantalla placeholder indicando que el modulo esta siendo actualizado.
 - No hay llamadas reales a API para estadisticas, pedidos, inventario, envios, facturacion o configuracion desde el dashboard.
 
-### 6.6. Gestion de empleados
+### 6.7. Gestion de empleados
 
 Solo usuarios con rol `1` pueden gestionar empleados.
 
@@ -445,6 +450,8 @@ Rutas detectadas:
 | POST | `/api/v1/pagos` | Registrar pago y generar factura si es aprobado |
 | GET | `/api/v1/pagos/mis-pagos` | Listar pagos del cliente autenticado |
 | GET | `/api/v1/pagos/pedido/{pedido_id}` | Consultar comprobante/factura de un pedido |
+| GET | `/api/v1/pagos/facturas/{factura_id}/pdf` | Descargar factura formal en PDF |
+| POST | `/api/v1/pagos/facturas/{factura_id}/email` | Enviar factura por correo |
 
 ## 8. Modelo de datos actual
 

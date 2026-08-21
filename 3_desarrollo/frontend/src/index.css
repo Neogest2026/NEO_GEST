@@ -669,6 +669,32 @@ body {
   overflow-wrap: anywhere;
 }
 
+.receipt-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-top: 1px solid #e5e7eb;
+  padding-top: 1rem;
+}
+
+.receipt-email {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: min(100%, 430px);
+}
+
+.receipt-email input {
+  width: 100%;
+  min-width: 180px;
+  border: 1px solid #d1d5db;
+  border-radius: 0.45rem;
+  padding: 0.7rem 0.8rem;
+  color: #111827;
+}
+
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -785,9 +811,15 @@ body {
   }
 
   .order-success,
-  .order-actions {
+  .order-actions,
+  .receipt-actions,
+  .receipt-email {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .receipt-email {
+    width: 100%;
   }
 
   .dashboard-sidebar {
