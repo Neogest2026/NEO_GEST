@@ -35,6 +35,7 @@ from app.models.pago import Factura, Pago
 from app.models.pedido import DetallePedido, Pedido
 from app.models.usuario import Usuario
 from app.schemas.pago_schema import EnvioComprobanteRequest, PagoCreate
+from app.services.pedido_service import expirar_pedidos_pendientes
 from app.security.security import get_current_user
 
 router = APIRouter(prefix="/api/v1/pagos", tags=["Pagos y Facturacion"])
@@ -287,6 +288,8 @@ def registrar_pago(
     ruc_nit = limpiar_ruc_nit(data.ruc_nit_cliente)
 
     try:
+        if expirar_pedidos_pendientes(cliente.idCliente, db):
+            db.commit()
         pedido = obtener_pedido_del_cliente(data.pedido_id, cliente, db, bloquear=True)
         pago_aprobado = (
             db.query(Pago)

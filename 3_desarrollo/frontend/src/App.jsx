@@ -18,6 +18,7 @@ function App() {
     const [message, setMessage] = useState(null)
     const [isCheckingOut, setIsCheckingOut] = useState(false)
     const [isPaying, setIsPaying] = useState(false)
+    const [cancelingOrderId, setCancelingOrderId] = useState(null)
     const [currentUser, setCurrentUser] = useState(() => {
         const savedUser = localStorage.getItem('neogest_user')
         return savedUser ? JSON.parse(savedUser) : null
@@ -145,7 +146,7 @@ function App() {
         setPaymentPromptOrder(data)
         setCatalogReloadKey((key) => key + 1)
         await loadOrders()
-        showMessage(`Pedido #${data.idPedido} creado. Completa el pago para generar factura`)
+        showMessage(`Pedido #${data.idPedido} creado como pendiente. Completa el pago para confirmarlo`)
     }
 
     const payOrder = async (order, paymentData) => {
@@ -201,6 +202,40 @@ function App() {
         }
         setPaymentResult(data)
         return data
+    }
+
+    const cancelOrder = async (order) => {
+        const orderId = order.id || order.idPedido
+        if (!orderId || cancelingOrderId) return false
+        setCancelingOrderId(orderId)
+        try {
+            const response = await fetch(`${API_URL}/api/v1/pedidos/${orderId}/cancelar`, {
+                method: 'POST',
+                headers: authHeaders(),
+            })
+            const data = await response.json()
+
+            if (!response.ok) {
+                showMessage(data.detail || 'No fue posible cancelar el pedido', 'error')
+                return false
+            }
+
+            setPaymentPromptOrder(null)
+            setPaymentResult(null)
+            setLastOrder((prev) => {
+                const prevId = prev?.id || prev?.idPedido
+                return prevId === orderId ? { ...prev, estado: data.estado } : prev
+            })
+            await loadOrders()
+            setCatalogReloadKey((key) => key + 1)
+            showMessage('Pedido cancelado. El stock fue liberado')
+            return true
+        } catch (error) {
+            showMessage('No fue posible cancelar el pedido', 'error')
+            return false
+        } finally {
+            setCancelingOrderId(null)
+        }
     }
 
     const downloadInvoice = async (payment) => {
@@ -266,7 +301,7 @@ function App() {
                 <Navbar onLoginClick={() => setView('login')} onRegisterClick={() => setIsRegisterOpen(true)} onSearch={setSearchTerm} cartItemsCount={cartItems.reduce((total, item) => total + item.cantidad, 0)} onCartClick={() => setIsCartOpen(true)} />
                 <Hero />
                 <Catalog searchTerm={searchTerm} addToCart={addToCart} reloadKey={catalogReloadKey} />
-                {currentUser?.role === 'cliente' && <OrdersPanel lastOrder={lastOrder} orders={orders} onPayOrder={payOrder} onViewPayment={viewPayment} onDownloadInvoice={downloadInvoice} onSendInvoiceEmail={sendInvoiceEmail} isPaying={isPaying} paymentResult={paymentResult} paymentPromptOrder={paymentPromptOrder} onPaymentPromptClose={() => setPaymentPromptOrder(null)} />}
+                {currentUser?.role === 'cliente' && <OrdersPanel lastOrder={lastOrder} orders={orders} onPayOrder={payOrder} onViewPayment={viewPayment} onCancelOrder={cancelOrder} onDownloadInvoice={downloadInvoice} onSendInvoiceEmail={sendInvoiceEmail} isPaying={isPaying} cancelingOrderId={cancelingOrderId} paymentResult={paymentResult} paymentPromptOrder={paymentPromptOrder} onPaymentPromptClose={() => setPaymentPromptOrder(null)} />}
                 <Footer />
                 {isRegisterOpen && <RegisterModal onClose={() => setIsRegisterOpen(false)} onRegistered={(text) => showMessage(text)} />}
                 <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} items={cartItems} onRemove={removeCartItem} onUpdateQuantity={updateCartItemQuantity} onCheckout={checkoutCart} isCheckingOut={isCheckingOut} />

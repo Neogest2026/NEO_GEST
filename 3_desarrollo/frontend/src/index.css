@@ -147,6 +147,7 @@
 
 .badge-pending { background: #fffbeb; color: #92400e; border: 1px solid #fef3c7; }
 .badge-paid { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+.badge-cancelled { background: #f3f4f6; color: #4b5563; border: 1px solid #d1d5db; }
 .badge-success { background: #f0fdf4; color: #166534; border: 1px solid #dcfce7; }
 .badge-process { background: #eff6ff; color: #1e40af; border: 1px solid #dbeafe; }
 
@@ -163,6 +164,15 @@
 
 .table-action:hover {
   background: #f9fafb;
+}
+
+.table-action-danger {
+  color: #b91c1c;
+  border-color: #fecaca;
+}
+
+.table-action-danger:hover {
+  background: #fef2f2;
 }
 
 .btn-ver {
@@ -622,6 +632,13 @@ body {
   display: flex;
   align-items: center;
   gap: 1rem;
+}
+
+.order-inline-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .order-kicker {

@@ -21,6 +21,8 @@ load_env_file()
 DATABASE_URL = os.getenv("DATABASE_URL", "mysql+mysqlconnector://root:1234@localhost/neogest")
 SECRET_KEY = os.getenv("SECRET_KEY", "neogest-dev-secret-change-me")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "120"))
+PENDING_ORDER_EXPIRATION_MINUTES = int(os.getenv("PENDING_ORDER_EXPIRATION_MINUTES", "1440"))
+PENDING_ORDER_EXPIRATION_CHECK_SECONDS = int(os.getenv("PENDING_ORDER_EXPIRATION_CHECK_SECONDS", "300"))
 
 COMPANY_NAME = os.getenv("COMPANY_NAME", "NEOGEST MODERNA")
 COMPANY_NIT = os.getenv("COMPANY_NIT", "NIT-900000000-0")

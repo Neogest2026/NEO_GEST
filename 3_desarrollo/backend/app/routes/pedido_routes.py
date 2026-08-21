@@ -6,6 +6,7 @@ from app.models.catalogo import Producto
 from app.models.cliente import Cliente
 from app.models.pedido import DetallePedido, Pedido
 from app.models.usuario import Usuario
+from app.services.pedido_service import cancelar_pedido_pendiente, expirar_pedidos_pendientes
 from app.security.security import get_current_user
 
 router = APIRouter(prefix="/api/v1/pedidos", tags=["Pedidos"])
@@ -52,6 +53,8 @@ def listar_mis_pedidos(
     current_user: Usuario = Depends(get_current_user),
 ):
     cliente = obtener_cliente_actual(current_user, db)
+    if expirar_pedidos_pendientes(cliente.idCliente, db):
+        db.commit()
     pedidos = (
         db.query(Pedido)
         .filter(Pedido.Cliente_idCliente == cliente.idCliente)
@@ -68,6 +71,8 @@ def obtener_mi_pedido(
     current_user: Usuario = Depends(get_current_user),
 ):
     cliente = obtener_cliente_actual(current_user, db)
+    if expirar_pedidos_pendientes(cliente.idCliente, db):
+        db.commit()
     pedido = (
         db.query(Pedido)
         .filter(Pedido.idPedido == pedido_id, Pedido.Cliente_idCliente == cliente.idCliente)
@@ -76,3 +81,34 @@ def obtener_mi_pedido(
     if not pedido:
         raise HTTPException(status_code=404, detail="Pedido no encontrado")
     return pedido_response(pedido, db)
+
+
+@router.post("/{pedido_id}/cancelar")
+def cancelar_mi_pedido(
+    pedido_id: int,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
+):
+    cliente = obtener_cliente_actual(current_user, db)
+    try:
+        pedido = (
+            db.query(Pedido)
+            .filter(Pedido.idPedido == pedido_id, Pedido.Cliente_idCliente == cliente.idCliente)
+            .with_for_update()
+            .first()
+        )
+        if not pedido:
+            raise HTTPException(status_code=404, detail="Pedido no encontrado")
+        cancelar_pedido_pendiente(pedido, db)
+        db.commit()
+        db.refresh(pedido)
+        return {
+            "mensaje": "Pedido cancelado y stock liberado",
+            **pedido_response(pedido, db),
+        }
+    except HTTPException:
+        db.rollback()
+        raise
+    except Exception as exc:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="No fue posible cancelar el pedido") from exc

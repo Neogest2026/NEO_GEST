@@ -33,6 +33,7 @@ OK: HU-05 pago aprobado, factura y validaciones verificadas
 | Incluir datos fiscales completos | Implementado | PDF incluye emisor, NIT, direccion, cliente, RUC/NIT, direccion fiscal, pedido e items | PDF abierto con datos fiscales |
 | Enviar comprobante por correo | Implementado | `POST /api/v1/pagos/facturas/{factura_id}/email` envia por SMTP si esta configurado o simula envio si no | Boton `Enviar por correo` |
 | Evitar pago aprobado duplicado | Implementado | Prueba valida HTTP 409 al repetir pago aprobado | Swagger con error 409 |
+| Bloquear pago de pedidos cancelados o vencidos | Implementado | El backend solo permite pagar pedidos en estado `Pendiente` | Pedido `Cancelado` o `Vencido` con intento de pago rechazado |
 | Registrar pago rechazado sin factura | Implementado | Pago `Rechazado` conserva pedido `Pendiente` y no crea factura | Respuesta API de pago rechazado |
 | Permitir consultar comprobante | Implementado | `GET /api/v1/pagos/pedido/{pedido_id}` | Boton `Comprobante` en pedido pagado |
 
@@ -52,6 +53,7 @@ OK: HU-05 pago aprobado, factura y validaciones verificadas
 - El cliente solo puede pagar pedidos asociados a su propia cuenta.
 - El monto no se recibe desde frontend; se toma desde `pedido.total_compra`.
 - Los pedidos solo se pagan si estan en estado `Pendiente`.
+- Los pedidos `Cancelado`, `Vencido` o `Pagado` no aceptan nuevos pagos.
 - Un pedido con pago aprobado no acepta otro pago aprobado.
 - Un pago `Aprobado` cambia el pedido a `Pagado` y genera factura.
 - Un pago `Rechazado` queda registrado, pero no cambia el pedido ni genera factura.

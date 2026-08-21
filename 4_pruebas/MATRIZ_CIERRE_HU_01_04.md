@@ -12,6 +12,7 @@ Con backend y frontend activos:
 cd C:\Users\jebus\OneDrive\Documentos\NEO_GEST
 powershell -ExecutionPolicy Bypass -File 4_pruebas\pruebas\test_hu_01_04.ps1
 powershell -ExecutionPolicy Bypass -File 4_pruebas\pruebas\test_hu_01_04_negativas.ps1
+powershell -ExecutionPolicy Bypass -File 4_pruebas\pruebas\test_hu_04_cancelacion_stock.ps1
 ```
 
 Resultado esperado:
@@ -19,6 +20,7 @@ Resultado esperado:
 ```text
 OK: HU-01, HU-02, HU-03 y HU-04 verificadas
 OK: HU-01, HU-02, HU-03 y HU-04 validaciones negativas verificadas
+OK: HU-04 cancelacion libera stock y bloquea pago posterior
 ```
 
 ## Matriz funcional
@@ -39,6 +41,9 @@ OK: HU-01, HU-02, HU-03 y HU-04 validaciones negativas verificadas
 | HU-04 | Congela precio en `precio_al_momento` | Implementado | Smoke test valida `precio_al_momento` en respuesta de checkout | Consulta SQL de `detalle_pedido` |
 | HU-04 | Pedido inicia en `Pendiente` | Implementado | Smoke test valida `estado = Pendiente` | Panel de pedidos recientes |
 | HU-04 | Descuenta stock tras confirmar | Implementado | Backend resta `stock_actual` dentro de la transaccion | Consulta SQL antes/despues o stock actualizado en catalogo |
+| HU-04 | Permite cancelar pedido pendiente | Implementado | `POST /api/v1/pedidos/{pedido_id}/cancelar` cambia estado a `Cancelado` | Pedido pendiente con boton `Cancelar` |
+| HU-04 | Restaura stock al cancelar | Implementado | `test_hu_04_cancelacion_stock.ps1` compara stock antes, despues del checkout y despues de cancelar | Catalogo mostrando stock restaurado |
+| HU-04 | Vence pedidos pendientes | Implementado | Tarea periodica del backend usa `PENDING_ORDER_EXPIRATION_MINUTES` y `PENDING_ORDER_EXPIRATION_CHECK_SECONDS`; tambien se valida al consultar o pagar | Configuracion `.env` y pedido con estado `Vencido` |
 
 ## Pruebas negativas cubiertas
 
@@ -51,6 +56,8 @@ OK: HU-01, HU-02, HU-03 y HU-04 validaciones negativas verificadas
 | Agregar cantidad mayor al stock | HTTP 409 |
 | Producto agotado en catalogo | `disponible=false` |
 | Checkout con carrito vacio | HTTP 400 |
+| Pago de pedido cancelado | HTTP 409 |
+| Segunda cancelacion del mismo pedido | HTTP 409 |
 
 ## Checklist de capturas para el manual
 
@@ -65,12 +72,15 @@ OK: HU-01, HU-02, HU-03 y HU-04 validaciones negativas verificadas
 9. Carrito con item agregado.
 10. Confirmacion de checkout.
 11. Panel de pedidos mostrando pedido `Pendiente`.
-12. Login administrativo en `/#admin`.
-13. Dashboard administrativo.
-14. Creacion de empleado con cargo.
-15. Consulta SQL de `Usuario.password_hash`.
-16. Consulta SQL de `detalle_pedido.precio_al_momento`.
+12. Modal de pago con mensaje de pedido pendiente.
+13. Cancelacion de pedido pendiente.
+14. Catalogo con stock restaurado despues de cancelar.
+15. Login administrativo en `/#admin`.
+16. Dashboard administrativo.
+17. Creacion de empleado con cargo.
+18. Consulta SQL de `Usuario.password_hash`.
+19. Consulta SQL de `detalle_pedido.precio_al_momento`.
 
 ## Estado para avanzar
 
-HU-01, HU-02, HU-03 y HU-04 quedan listas para cierre funcional. Se recomienda guardar las capturas anteriores y anexar la salida de las pruebas automatizadas en el documento final.
+HU-01, HU-02, HU-03 y HU-04 quedan listas para cierre funcional. HU-04 ahora contempla reserva de stock, cancelacion manual, vencimiento automatico configurable y restauracion de inventario. Se recomienda guardar las capturas anteriores y anexar la salida de las pruebas automatizadas en el documento final.

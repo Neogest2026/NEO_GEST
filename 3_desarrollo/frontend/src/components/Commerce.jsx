@@ -77,9 +77,9 @@ export const CartDrawer = ({ isOpen, onClose, items, onRemove, onUpdateQuantity,
                             <span style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>Total</span>
                             <span style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--primary-dark)' }}>{formatPrice(total)}</span>
                         </div>
-                        <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '1.5rem' }}>Se creara el pedido y se abrira el formulario de pago.</p>
+                        <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '1.5rem' }}>Se creara un pedido pendiente y se reservara el stock hasta que pagues o canceles.</p>
                         <button onClick={onCheckout} disabled={isCheckingOut} className="btn btn-primary" style={{ width: '100%', padding: '1.25rem' }}>
-                            {isCheckingOut ? 'Confirmando pedido...' : 'Confirmar pedido y pagar'}
+                            {isCheckingOut ? 'Creando pedido...' : 'Crear pedido y continuar al pago'}
                         </button>
                     </div>
                 )}
@@ -90,7 +90,7 @@ export const CartDrawer = ({ isOpen, onClose, items, onRemove, onUpdateQuantity,
 
 const getOrderId = (order) => order?.id || order?.idPedido
 
-const PaymentModal = ({ order, onClose, onSubmit, isPaying }) => {
+const PaymentModal = ({ order, onClose, onSubmit, onCancelOrder, isPaying, isCanceling }) => {
     const [form, setForm] = useState({
         metodo: 'Tarjeta',
         ruc_nit_cliente: '',
@@ -112,6 +112,11 @@ const PaymentModal = ({ order, onClose, onSubmit, isPaying }) => {
             ruc_nit_cliente: form.ruc_nit_cliente.trim(),
         })
         if (result?.ok) onClose()
+    }
+
+    const handleCancelOrder = async () => {
+        const cancelled = await onCancelOrder(order)
+        if (cancelled) onClose()
     }
 
     return (
@@ -163,8 +168,11 @@ const PaymentModal = ({ order, onClose, onSubmit, isPaying }) => {
 
                     {error && <div className="inline-message error">{error}</div>}
 
-                    <button type="submit" disabled={isPaying} className="btn btn-primary">
+                    <button type="submit" disabled={isPaying || isCanceling} className="btn btn-primary">
                         {isPaying ? 'Procesando...' : 'Confirmar pago'}
+                    </button>
+                    <button type="button" disabled={isPaying || isCanceling} className="table-action table-action-danger" onClick={handleCancelOrder}>
+                        {isCanceling ? 'Cancelando pedido...' : 'Cancelar pedido y liberar stock'}
                     </button>
                 </form>
             </div>
@@ -229,7 +237,7 @@ const PaymentReceipt = ({ payment, onDownloadInvoice, onSendInvoiceEmail }) => {
     )
 }
 
-export const OrdersPanel = ({ lastOrder, orders, onPayOrder, onViewPayment, onDownloadInvoice, onSendInvoiceEmail, isPaying, paymentResult, paymentPromptOrder, onPaymentPromptClose }) => {
+export const OrdersPanel = ({ lastOrder, orders, onPayOrder, onViewPayment, onCancelOrder, onDownloadInvoice, onSendInvoiceEmail, isPaying, cancelingOrderId, paymentResult, paymentPromptOrder, onPaymentPromptClose }) => {
     const [paymentOrder, setPaymentOrder] = useState(null)
 
     useEffect(() => {
@@ -257,9 +265,14 @@ export const OrdersPanel = ({ lastOrder, orders, onPayOrder, onViewPayment, onDo
                     <div className="order-actions">
                         <strong>{formatPrice(lastOrder.total_compra)}</strong>
                         {lastOrder.estado === 'Pendiente' && (
-                            <button type="button" className="btn btn-primary" onClick={() => setPaymentOrder(lastOrder)}>
-                                Pagar
-                            </button>
+                            <div className="order-inline-actions">
+                                <button type="button" className="btn btn-primary" onClick={() => setPaymentOrder(lastOrder)}>
+                                    Pagar
+                                </button>
+                                <button type="button" className="table-action table-action-danger" onClick={() => onCancelOrder(lastOrder)} disabled={cancelingOrderId === getOrderId(lastOrder)}>
+                                    {cancelingOrderId === getOrderId(lastOrder) ? 'Cancelando...' : 'Cancelar'}
+                                </button>
+                            </div>
                         )}
                     </div>
                 </div>
@@ -285,14 +298,19 @@ export const OrdersPanel = ({ lastOrder, orders, onPayOrder, onViewPayment, onDo
                         {orders.map((order) => (
                             <tr key={order.id}>
                                 <td>#{order.id}</td>
-                                <td><span className={`badge ${order.estado === 'Pagado' ? 'badge-paid' : 'badge-pending'}`}>{order.estado}</span></td>
+                                <td><span className={`badge ${order.estado === 'Pagado' ? 'badge-paid' : order.estado === 'Pendiente' ? 'badge-pending' : 'badge-cancelled'}`}>{order.estado}</span></td>
                                 <td>{formatPrice(order.total_compra)}</td>
                                 <td>{order.items.length}</td>
                                 <td>
                                     {order.estado === 'Pendiente' && (
-                                        <button type="button" className="table-action" onClick={() => setPaymentOrder(order)}>
-                                            Pagar
-                                        </button>
+                                        <div className="order-inline-actions">
+                                            <button type="button" className="table-action" onClick={() => setPaymentOrder(order)}>
+                                                Pagar
+                                            </button>
+                                            <button type="button" className="table-action table-action-danger" onClick={() => onCancelOrder(order)} disabled={cancelingOrderId === order.id}>
+                                                {cancelingOrderId === order.id ? 'Cancelando...' : 'Cancelar'}
+                                            </button>
+                                        </div>
                                     )}
                                     {order.estado === 'Pagado' && (
                                         <button type="button" className="table-action" onClick={() => onViewPayment(order)}>
@@ -315,7 +333,9 @@ export const OrdersPanel = ({ lastOrder, orders, onPayOrder, onViewPayment, onDo
                     order={paymentOrder}
                     onClose={closePaymentModal}
                     onSubmit={onPayOrder}
+                    onCancelOrder={onCancelOrder}
                     isPaying={isPaying}
+                    isCanceling={cancelingOrderId === getOrderId(paymentOrder)}
                 />
             )}
         </section>

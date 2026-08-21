@@ -107,17 +107,29 @@ Implementado relacionado:
 - Hace rollback si ocurre un error durante la confirmacion.
 - Requiere token del cliente para confirmar.
 - Existe `GET /api/v1/pedidos/mis-pedidos` para listar pedidos del cliente autenticado.
+- Existe `POST /api/v1/pedidos/{pedido_id}/cancelar` para cancelar pedidos pendientes propios.
+- Al cancelar un pedido pendiente, el sistema restaura el stock de sus items.
+- Los pedidos pendientes vencen automaticamente mediante tarea periodica del backend, segun `PENDING_ORDER_EXPIRATION_MINUTES`.
+- La frecuencia de revision del vencimiento se configura con `PENDING_ORDER_EXPIRATION_CHECK_SECONDS`.
+- El backend tambien valida vencimiento al consultar pedidos o intentar pagarlos.
 
 Frontend:
 
-- El boton `Confirmar pedido y pagar` llama al endpoint real, crea el pedido y abre automaticamente el modal de pago.
+- El boton `Crear pedido y continuar al pago` llama al endpoint real, crea el pedido y abre automaticamente el modal de pago.
 - El frontend refresca el catalogo tras el checkout para mostrar el stock actualizado.
 - El frontend muestra resumen del pedido creado y una tabla de pedidos recientes.
+- Los pedidos pendientes muestran acciones `Pagar` y `Cancelar`.
+- El modal de pago permite cancelar el pedido y liberar stock.
 
 Archivos relacionados:
 
 - `3_desarrollo/backend/app/routes/carrito_routes.py`
+- `3_desarrollo/backend/app/routes/pedido_routes.py`
+- `3_desarrollo/backend/app/main.py`
+- `3_desarrollo/backend/app/services/pedido_expiration_worker.py`
+- `3_desarrollo/backend/app/services/pedido_service.py`
 - `3_desarrollo/frontend/src/components/Commerce.jsx`
+- `4_pruebas/pruebas/test_hu_04_cancelacion_stock.ps1`
 
 ## HU-05: Pago y Facturacion
 
@@ -234,6 +246,7 @@ Ejecutar con backend activo:
 ```powershell
 powershell -ExecutionPolicy Bypass -File 4_pruebas\pruebas\test_hu_01_04.ps1
 powershell -ExecutionPolicy Bypass -File 4_pruebas\pruebas\test_hu_01_04_negativas.ps1
+powershell -ExecutionPolicy Bypass -File 4_pruebas\pruebas\test_hu_04_cancelacion_stock.ps1
 powershell -ExecutionPolicy Bypass -File 4_pruebas\pruebas\test_hu_05.ps1
 ```
 
@@ -257,6 +270,15 @@ La prueba negativa valida:
 - Stock insuficiente.
 - Producto agotado con `disponible=false`.
 - Checkout con carrito vacio.
+
+La prueba de cancelacion de pedido valida:
+
+- Pedido creado en estado `Pendiente`.
+- Descuento inicial de stock al reservar el pedido.
+- Cancelacion del pedido pendiente.
+- Restauracion del stock al cancelar.
+- Bloqueo de pago posterior sobre pedido cancelado.
+- Bloqueo de segunda cancelacion del mismo pedido.
 
 La matriz de cierre funcional, criterios de aceptacion y capturas sugeridas quedo en `4_pruebas/MATRIZ_CIERRE_HU_01_04.md`.
 La matriz de cierre de HU-05 quedo en `4_pruebas/MATRIZ_CIERRE_HU_05.md`.

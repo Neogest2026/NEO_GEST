@@ -1,3 +1,4 @@
+import asyncio
 
 # ==============================
 # IMPORTACIÓN DE LIBRERÍAS
@@ -16,6 +17,7 @@ from app.routes import carrito_routes
 from app.routes import empleado_routes
 from app.routes import pago_routes
 from app.routes import pedido_routes
+from app.services.pedido_expiration_worker import monitor_pedidos_pendientes
 
 # ==============================
 # CREACIÓN DE LA APLICACIÓN
@@ -50,6 +52,18 @@ app.include_router(carrito_routes.router)
 app.include_router(empleado_routes.router)
 app.include_router(pedido_routes.router)
 app.include_router(pago_routes.router)
+
+
+@app.on_event("startup")
+async def iniciar_monitor_pedidos_pendientes():
+    app.state.pending_order_expiration_task = asyncio.create_task(monitor_pedidos_pendientes())
+
+
+@app.on_event("shutdown")
+async def detener_monitor_pedidos_pendientes():
+    task = getattr(app.state, "pending_order_expiration_task", None)
+    if task:
+        task.cancel()
 
 
 @app.get("/")

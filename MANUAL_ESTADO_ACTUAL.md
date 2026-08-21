@@ -194,6 +194,19 @@ Resultado esperado:
 OK: HU-01, HU-02, HU-03 y HU-04 validaciones negativas verificadas
 ```
 
+Para validar cancelacion de pedidos pendientes y restauracion de stock:
+
+```powershell
+cd C:\Users\jebus\OneDrive\Documentos\NEO_GEST
+powershell -ExecutionPolicy Bypass -File 4_pruebas\pruebas\test_hu_04_cancelacion_stock.ps1
+```
+
+Resultado esperado:
+
+```text
+OK: HU-04 cancelacion libera stock y bloquea pago posterior
+```
+
 La matriz de cierre funcional, criterios y capturas sugeridas esta en `4_pruebas/MATRIZ_CIERRE_HU_01_04.md`.
 
 ### 4.5. Ejecutar prueba automatizada HU-05
@@ -320,7 +333,7 @@ Reglas implementadas:
 - Si el item ya existe en el carrito, se suma la cantidad.
 - Si la cantidad baja de `1`, el frontend elimina el item.
 
-El boton `Confirmar pedido y pagar` confirma el carrito contra `POST /api/v1/carrito/checkout`.
+El boton `Crear pedido y continuar al pago` confirma el carrito contra `POST /api/v1/carrito/checkout`.
 
 Al confirmar:
 
@@ -331,6 +344,10 @@ Al confirmar:
 - Se eliminan los items del carrito.
 
 Despues del checkout, el frontend cierra el carrito, refresca el stock del catalogo y abre automaticamente el modal de pago del pedido creado.
+
+Mientras el pedido esta `Pendiente`, el stock queda reservado. El cliente puede pagar o cancelar el pedido. Si cancela, el sistema cambia el pedido a `Cancelado` y restaura el stock de los productos.
+
+Los pedidos pendientes vencen automaticamente por una tarea periodica del backend. El tiempo de vida se configura con `PENDING_ORDER_EXPIRATION_MINUTES` en `.env`; por defecto son 1440 minutos. La frecuencia de revision se configura con `PENDING_ORDER_EXPIRATION_CHECK_SECONDS`; por defecto revisa cada 300 segundos. Adicionalmente, el backend vuelve a validar vencimiento al consultar pedidos o intentar pagar.
 
 ### 6.5. Pago y facturacion
 
@@ -362,6 +379,7 @@ Reglas implementadas:
 - Si el pago queda `Aprobado`, el pedido cambia a `Pagado`.
 - Si el pago queda `Aprobado`, se crea un registro en `factura` con `ruc_nit_cliente`.
 - Si el pago queda `Rechazado`, el pedido sigue `Pendiente` y no se genera factura.
+- Si el pedido fue `Cancelado` o `Vencido`, el backend bloquea el pago.
 - El sistema bloquea un segundo pago aprobado sobre el mismo pedido.
 - Las nuevas facturas usan numeracion configurable con `INVOICE_PREFIX`, por defecto `NG-FE-YYYY-000001`.
 - El frontend muestra comprobante con metodo, monto, numero de factura, RUC/NIT, cliente y datos del emisor.
@@ -447,6 +465,7 @@ Rutas detectadas:
 | POST | `/api/v1/empleados` | Crear empleado como admin |
 | GET | `/api/v1/pedidos/mis-pedidos` | Listar pedidos del cliente autenticado |
 | GET | `/api/v1/pedidos/{pedido_id}` | Consultar un pedido del cliente autenticado |
+| POST | `/api/v1/pedidos/{pedido_id}/cancelar` | Cancelar pedido pendiente y liberar stock |
 | POST | `/api/v1/pagos` | Registrar pago y generar factura si es aprobado |
 | GET | `/api/v1/pagos/mis-pagos` | Listar pagos del cliente autenticado |
 | GET | `/api/v1/pagos/pedido/{pedido_id}` | Consultar comprobante/factura de un pedido |
@@ -513,14 +532,18 @@ Capturas funcionales:
 6. Modal de registro.
 7. Pantalla de login.
 8. Carrito abierto con productos.
-9. Pedido pendiente en `Mis pedidos recientes`.
-10. Modal de pago con metodo y RUC/NIT.
-11. Comprobante/factura despues de pago aprobado.
-12. Pedido actualizado a estado `Pagado`.
-13. Login administrativo desde `/#admin`.
-14. Dashboard administrativo.
-15. Gestion de empleados en la pestana `Usuarios`.
-16. Pantallas placeholder de inventario, envios, devolucion y configuracion.
+9. Boton `Crear pedido y continuar al pago`.
+10. Pedido pendiente en `Mis pedidos recientes`.
+11. Mensaje de pedido pendiente hasta aprobar el pago.
+12. Accion `Cancelar` en pedido pendiente.
+13. Pedido cancelado y stock restaurado en catalogo.
+14. Modal de pago con metodo y RUC/NIT.
+15. Comprobante/factura despues de pago aprobado.
+16. Pedido actualizado a estado `Pagado`.
+17. Login administrativo desde `/#admin`.
+18. Dashboard administrativo.
+19. Gestion de empleados en la pestana `Usuarios`.
+20. Pantallas placeholder de inventario, envios, devolucion y configuracion.
 
 Capturas de analisis/diseno:
 
@@ -540,7 +563,8 @@ Capturas de analisis/diseno:
 - El catalogo demo fue cargado con `3_desarrollo/seed_catalogo_demo.sql`.
 - El detalle de producto ya esta conectado al backend.
 - La gestion de empleados ya crea usuario rol 2 y empleado desde el dashboard con token admin.
-- El checkout ya crea pedido, detalle de pedido, descuenta stock y permite listar pedidos del cliente.
+- El checkout ya crea pedido pendiente, detalle de pedido, descuenta stock reservado y permite listar pedidos del cliente.
+- Los pedidos pendientes pueden cancelarse o vencer automaticamente; en ambos casos el stock se restaura.
 - Los componentes React principales fueron limpiados de mensajes con codificacion rota.
 - El dashboard admin es parcialmente maqueta.
 - Pago y facturacion ya tienen flujo funcional simulado desde pedidos del cliente.
@@ -552,7 +576,7 @@ Capturas de analisis/diseno:
 2. Importar `3_desarrollo/neogest.sql`.
 3. Cargar datos de prueba para `categoria` y `producto`.
 4. Levantar backend y frontend.
-5. Ejecutar `test_hu_01_04.ps1`, `test_hu_01_04_negativas.ps1` y `test_hu_05.ps1`.
+5. Ejecutar `test_hu_01_04.ps1`, `test_hu_01_04_negativas.ps1`, `test_hu_04_cancelacion_stock.ps1` y `test_hu_05.ps1`.
 6. Tomar capturas siguiendo la lista del punto 9 y las matrices `4_pruebas/MATRIZ_CIERRE_HU_01_04.md` y `4_pruebas/MATRIZ_CIERRE_HU_05.md`.
 7. Separar el manual final en:
    - Manual tecnico de instalacion.
