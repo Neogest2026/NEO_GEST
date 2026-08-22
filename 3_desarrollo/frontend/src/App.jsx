@@ -214,6 +214,22 @@ function App() {
         return data
     }
 
+    const trackOrder = async (order) => {
+        const orderId = order.id || order.idPedido
+        const response = await fetch(`${API_URL}/api/v1/envios/seguimiento/pedido/${orderId}`, { headers: authHeaders() })
+        const data = await response.json()
+        if (!response.ok) {
+            showMessage(data.detail || 'No fue posible consultar el rastreo', 'error')
+            return null
+        }
+        if (!data.tiene_envio) {
+            showMessage(data.mensaje || 'El pedido aun no ha sido despachado', 'error')
+        } else {
+            showMessage(`Envio ${data.estado}: ${data.empresa_transporte} ${data.codigo_seguimiento}`)
+        }
+        return data
+    }
+
     const cancelOrder = async (order) => {
         const orderId = order.id || order.idPedido
         if (!orderId || cancelingOrderId) return false
@@ -316,7 +332,7 @@ function App() {
                 <Navbar onLoginClick={() => setView('login')} onRegisterClick={() => setIsRegisterOpen(true)} onSearch={setSearchTerm} cartItemsCount={cartItems.reduce((total, item) => total + item.cantidad, 0)} onCartClick={() => setIsCartOpen(true)} currentUser={currentUser} onLogout={logout} theme={theme} onToggleTheme={toggleTheme} />
                 <Hero />
                 <Catalog searchTerm={searchTerm} addToCart={addToCart} reloadKey={catalogReloadKey} />
-                {currentUser?.role === 'cliente' && <OrdersPanel lastOrder={lastOrder} orders={orders} onPayOrder={payOrder} onViewPayment={viewPayment} onCancelOrder={cancelOrder} onDownloadInvoice={downloadInvoice} onSendInvoiceEmail={sendInvoiceEmail} isPaying={isPaying} cancelingOrderId={cancelingOrderId} paymentResult={paymentResult} paymentPromptOrder={paymentPromptOrder} onPaymentPromptClose={() => setPaymentPromptOrder(null)} />}
+                {currentUser?.role === 'cliente' && <OrdersPanel lastOrder={lastOrder} orders={orders} onPayOrder={payOrder} onViewPayment={viewPayment} onTrackOrder={trackOrder} onCancelOrder={cancelOrder} onDownloadInvoice={downloadInvoice} onSendInvoiceEmail={sendInvoiceEmail} isPaying={isPaying} cancelingOrderId={cancelingOrderId} paymentResult={paymentResult} paymentPromptOrder={paymentPromptOrder} onPaymentPromptClose={() => setPaymentPromptOrder(null)} />}
                 <Footer />
                 {isRegisterOpen && <RegisterModal onClose={() => setIsRegisterOpen(false)} onRegistered={(text) => showMessage(text)} />}
                 <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} items={cartItems} onRemove={removeCartItem} onUpdateQuantity={updateCartItemQuantity} onCheckout={checkoutCart} isCheckingOut={isCheckingOut} />

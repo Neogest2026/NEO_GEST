@@ -8,7 +8,10 @@ from app.routes import auth_routes
 from app.routes import carrito_routes
 from app.routes import catalogo_routes
 from app.routes import cliente_routes
+from app.routes import devolucion_routes
 from app.routes import empleado_routes
+from app.routes import envio_routes
+from app.routes import inventario_routes
 from app.routes import pago_routes
 from app.routes import pedido_routes
 from app.services.pedido_expiration_worker import monitor_pedidos_pendientes
@@ -48,6 +51,9 @@ app.include_router(carrito_routes.router)
 app.include_router(empleado_routes.router)
 app.include_router(pedido_routes.router)
 app.include_router(pago_routes.router)
+app.include_router(envio_routes.router)
+app.include_router(inventario_routes.router)
+app.include_router(devolucion_routes.router)
 
 
 @app.get("/")

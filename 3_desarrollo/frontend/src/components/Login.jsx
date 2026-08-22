@@ -28,7 +28,8 @@ const Login = ({ onLoginSuccess, onBack, isAdminLogin }) => {
             }
 
             onLoginSuccess({
-                role: data.rol === 1 ? 'admin' : 'cliente',
+                role: data.rol === 3 ? 'cliente' : 'admin',
+                roleId: data.rol,
                 userId: data.idUsuario,
                 token: data.access_token,
                 tokenType: data.token_type,

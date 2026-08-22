@@ -138,7 +138,7 @@ CREATE TABLE `devolucion` (
   `fecha_solicitud` datetime DEFAULT CURRENT_TIMESTAMP,
   `motivo` varchar(255) NOT NULL,
   `estado` varchar(45) NOT NULL,
-  `monto_reembolso` decimal(10,2) NOT NULL,
+  `monto_reembolso` decimal(10,2) NOT NULL DEFAULT '0.00',
   `Pedido_idPedido` int NOT NULL,
   `Empleado_idEmpleado` int NOT NULL,
   PRIMARY KEY (`idDevolucion`),
@@ -287,9 +287,10 @@ DROP TABLE IF EXISTS `movimiento_inventario`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `movimiento_inventario` (
   `idMovimiento_inventario` int NOT NULL AUTO_INCREMENT,
-  `tipo` enum('Entrada','Salida','Ajuste') NOT NULL,
+  `tipo` varchar(20) NOT NULL,
   `cantidad` int NOT NULL,
   `fecha` datetime DEFAULT CURRENT_TIMESTAMP,
+  `observacion` varchar(255) DEFAULT NULL,
   `Producto_idProducto` int NOT NULL,
   `Empleado_idEmpleado` int NOT NULL,
   PRIMARY KEY (`idMovimiento_inventario`),

@@ -333,6 +333,23 @@
   background: #fef2f2;
 }
 
+.table-input {
+  width: 120px;
+  border: 1px solid var(--input-border);
+  border-radius: 0.4rem;
+  background: var(--input-bg);
+  color: var(--text-strong);
+  padding: 0.55rem 0.65rem;
+  font-family: inherit;
+  font-weight: 700;
+}
+
+.table-input:focus {
+  outline: none;
+  border-color: var(--primary-dark);
+  box-shadow: 0 0 0 3px rgba(234, 179, 8, 0.14);
+}
+
 .btn-ver {
   padding: 0.4rem 1rem;
   border: 1px solid var(--border);
@@ -902,6 +919,27 @@ body {
   padding: 1.25rem;
 }
 
+.tracking-panel {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.8fr) 1.4fr;
+  gap: 1.5rem;
+  margin-top: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 4px solid #2563eb;
+  border-radius: 0.5rem;
+  padding: 1.25rem;
+}
+
+.tracking-panel h2 {
+  margin: 0.25rem 0;
+  color: var(--text-strong);
+}
+
+.tracking-panel p {
+  color: var(--text-light);
+}
+
 .payment-receipt h2 {
   margin: 0.25rem 0;
   color: var(--text-strong);
@@ -1047,6 +1085,60 @@ body {
   align-items: start;
 }
 
+.admin-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  box-shadow: var(--shadow);
+}
+
+.section-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.section-heading h2 {
+  color: var(--text-strong);
+  font-size: 1.2rem;
+}
+
+.admin-form {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.admin-form label {
+  display: grid;
+  gap: 0.45rem;
+  color: var(--text-strong);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.admin-form-inline {
+  grid-template-columns: repeat(4, minmax(150px, 1fr)) auto;
+  align-items: end;
+}
+
+.shipping-layout {
+  display: grid;
+  grid-template-columns: 380px minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.shipping-table {
+  min-width: 980px;
+}
+
+.shipping-edit-card {
+  grid-column: 1 / -1;
+}
+
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -1065,9 +1157,12 @@ body {
   }
 
   .admin-two-column,
+  .admin-form-inline,
+  .shipping-layout,
   .stats-grid,
   .product-detail-grid,
-  .payment-receipt {
+  .payment-receipt,
+  .tracking-panel {
     grid-template-columns: 1fr;
   }
 

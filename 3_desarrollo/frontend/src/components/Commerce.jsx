@@ -268,8 +268,37 @@ const PaymentReceipt = ({ payment, onDownloadInvoice, onSendInvoiceEmail }) => {
     )
 }
 
-export const OrdersPanel = ({ lastOrder, orders, onPayOrder, onViewPayment, onCancelOrder, onDownloadInvoice, onSendInvoiceEmail, isPaying, cancelingOrderId, paymentResult, paymentPromptOrder, onPaymentPromptClose }) => {
+const TrackingPanel = ({ tracking }) => {
+    if (!tracking) return null
+    return (
+        <div className="tracking-panel">
+            <div>
+                <span className="order-kicker">Rastreo</span>
+                <h2>Pedido #{tracking.pedido_id}</h2>
+                <p>{tracking.tiene_envio ? 'Pedido despachado' : tracking.mensaje}</p>
+            </div>
+            <div className="receipt-grid">
+                <span>Estado pedido</span>
+                <strong>{tracking.estado_pedido}</strong>
+                <span>Estado envio</span>
+                <strong>{tracking.estado || 'Sin despacho'}</strong>
+                <span>Transportadora</span>
+                <strong>{tracking.empresa_transporte || 'Pendiente'}</strong>
+                <span>Codigo</span>
+                <strong>{tracking.codigo_seguimiento || 'Pendiente'}</strong>
+                <span>Despacho</span>
+                <strong>{tracking.fecha_despacho ? new Date(tracking.fecha_despacho).toLocaleDateString('es-CO') : 'Pendiente'}</strong>
+                <span>Entrega estimada</span>
+                <strong>{tracking.fecha_entrega_estimada ? new Date(tracking.fecha_entrega_estimada).toLocaleDateString('es-CO') : 'Sin definir'}</strong>
+            </div>
+        </div>
+    )
+}
+
+export const OrdersPanel = ({ lastOrder, orders, onPayOrder, onViewPayment, onTrackOrder, onCancelOrder, onDownloadInvoice, onSendInvoiceEmail, isPaying, cancelingOrderId, paymentResult, paymentPromptOrder, onPaymentPromptClose }) => {
     const [paymentOrder, setPaymentOrder] = useState(null)
+    const [trackingResult, setTrackingResult] = useState(null)
+    const [trackingOrderId, setTrackingOrderId] = useState(null)
 
     useEffect(() => {
         if (paymentPromptOrder) {
@@ -280,6 +309,14 @@ export const OrdersPanel = ({ lastOrder, orders, onPayOrder, onViewPayment, onCa
     const closePaymentModal = () => {
         setPaymentOrder(null)
         if (onPaymentPromptClose) onPaymentPromptClose()
+    }
+
+    const handleTrackOrder = async (order) => {
+        const orderId = getOrderId(order)
+        setTrackingOrderId(orderId)
+        const data = await onTrackOrder(order)
+        if (data) setTrackingResult(data)
+        setTrackingOrderId(null)
     }
 
     if (!lastOrder && orders.length === 0) return null
@@ -310,6 +347,7 @@ export const OrdersPanel = ({ lastOrder, orders, onPayOrder, onViewPayment, onCa
             )}
 
             <PaymentReceipt payment={paymentResult} onDownloadInvoice={onDownloadInvoice} onSendInvoiceEmail={onSendInvoiceEmail} />
+            <TrackingPanel tracking={trackingResult} />
 
             <div style={{ marginTop: '1.5rem', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.5rem', overflowX: 'auto' }}>
                 <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid var(--border)' }}>
@@ -354,9 +392,14 @@ export const OrdersPanel = ({ lastOrder, orders, onPayOrder, onViewPayment, onCa
                                             </div>
                                         )}
                                         {order.estado === 'Pagado' && (
-                                            <button type="button" className="table-action" onClick={() => onViewPayment(order)}>
-                                                Comprobante
-                                            </button>
+                                            <div className="order-inline-actions">
+                                                <button type="button" className="table-action" onClick={() => onViewPayment(order)}>
+                                                    Comprobante
+                                                </button>
+                                                <button type="button" className="table-action" onClick={() => handleTrackOrder(order)} disabled={trackingOrderId === order.id}>
+                                                    {trackingOrderId === order.id ? 'Consultando...' : 'Rastrear'}
+                                                </button>
+                                            </div>
                                         )}
                                     </td>
                                 </tr>

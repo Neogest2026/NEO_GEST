@@ -12,6 +12,7 @@ venv/
 # Sistema operativo y archivos temporales de Office
 .DS_Store
 Thumbs.db
+desktop.ini
 ~$*
 *.log
 
