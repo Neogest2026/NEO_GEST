@@ -21,6 +21,7 @@ def producto_response(producto: Producto, categoria: Optional[Categoria] = None)
         "dimensiones": producto.dimensiones,
         "peso": float(producto.peso) if producto.peso is not None else None,
         "imagen_url": producto.imagen_url,
+        "activo": producto.activo,
         "categoria": (
             {"id": categoria.idCategoria, "nombre": categoria.nombre}
             if categoria
@@ -43,7 +44,7 @@ def listar_productos(
 ):
     consulta = db.query(Producto, Categoria).join(
         Categoria, Producto.Categoria_idCategoria == Categoria.idCategoria
-    )
+    ).filter(Producto.activo == True)
     if categoria_id is not None:
         consulta = consulta.filter(Producto.Categoria_idCategoria == categoria_id)
     if q:
@@ -59,7 +60,7 @@ def obtener_producto(producto_id: int, db: Session = Depends(get_db)):
     resultado = (
         db.query(Producto, Categoria)
         .join(Categoria, Producto.Categoria_idCategoria == Categoria.idCategoria)
-        .filter(Producto.idProducto == producto_id)
+        .filter(Producto.idProducto == producto_id, Producto.activo == True)
         .first()
     )
     if not resultado:

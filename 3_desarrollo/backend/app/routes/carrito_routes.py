@@ -76,7 +76,7 @@ def agregar_item(
 ):
     ensure_same_user_or_admin(data.usuario_id, current_user)
     cliente = obtener_cliente(data.usuario_id, db)
-    producto = db.query(Producto).filter(Producto.idProducto == data.producto_id).first()
+    producto = db.query(Producto).filter(Producto.idProducto == data.producto_id, Producto.activo == True).first()
     if not producto:
         raise HTTPException(status_code=404, detail="Producto no encontrado")
     if producto.stock_actual < data.cantidad:
@@ -122,6 +122,8 @@ def actualizar_item(
     if not carrito or not item or item.Carrito_idCarrito != carrito.idCarrito:
         raise HTTPException(status_code=404, detail="Item del carrito no encontrado")
     producto = db.query(Producto).filter(Producto.idProducto == item.Producto_idProducto).first()
+    if not producto or not producto.activo:
+        raise HTTPException(status_code=409, detail="El producto ya no esta disponible")
     if producto.stock_actual < data.cantidad:
         raise HTTPException(status_code=409, detail="Stock insuficiente")
     item.cantidad = data.cantidad
@@ -170,6 +172,8 @@ def confirmar_checkout(
             raise HTTPException(status_code=400, detail="El carrito esta vacio")
 
         for item, producto in filas:
+            if not producto.activo:
+                raise HTTPException(status_code=409, detail=f"{producto.nombre} ya no esta disponible")
             if producto.stock_actual < item.cantidad:
                 raise HTTPException(status_code=409, detail=f"Stock insuficiente para {producto.nombre}")
 

@@ -12,5 +12,7 @@ class MovimientoInventario(Base):
     cantidad = Column(Integer, nullable=False)
     fecha = Column(DateTime, server_default=func.now())
     observacion = Column(String(255))
+    stock_anterior = Column(Integer)
+    stock_nuevo = Column(Integer)
     Producto_idProducto = Column(Integer, nullable=False, index=True)
     Empleado_idEmpleado = Column(Integer, nullable=False, index=True)

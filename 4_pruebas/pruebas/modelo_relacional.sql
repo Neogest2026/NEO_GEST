@@ -44,16 +44,20 @@ CREATE TABLE `PRODUCTO` (
   `precio_unitario` decimal,
   `stock_actual` int,
   `dimensiones` varchar(255),
-  `imagen_url` varchar(255)
+  `imagen_url` varchar(255),
+  `activo` boolean
 );
 
 CREATE TABLE `MOVIMIENTO_INVENTARIO` (
   `id_movimiento` int PRIMARY KEY,
   `id_producto` int,
-  `id_empleado` int COMMENT 'Quién hizo el ajuste',
-  `tipo` varchar(255) COMMENT 'Entrada/Salida/Devolución',
+  `id_empleado` int COMMENT 'Empleado responsable del ajuste',
+  `tipo` varchar(255) COMMENT 'Entrada/Salida/Devolucion',
   `cantidad` int,
-  `fecha` datetime
+  `fecha` datetime,
+  `observacion` varchar(255),
+  `stock_anterior` int,
+  `stock_nuevo` int
 );
 
 CREATE TABLE `CARRITO` (

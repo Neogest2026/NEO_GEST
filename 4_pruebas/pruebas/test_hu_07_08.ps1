@@ -77,6 +77,37 @@ function Pagar-Pedido {
     }
 }
 
+function Crear-Producto-Con-Imagen {
+    param (
+        [string]$Token,
+        [int]$CategoriaId,
+        [string]$Nombre
+    )
+
+    $ImagePath = Join-Path $env:TEMP "neogest_producto_$RunId.png"
+    $ResponsePath = Join-Path $env:TEMP "neogest_producto_$RunId.json"
+    [IO.File]::WriteAllBytes($ImagePath, [Convert]::FromBase64String("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII="))
+
+    $Status = & curl.exe -s -o $ResponsePath -w "%{http_code}" -X POST "$ApiUrl/api/v1/inventario/productos" `
+        -H "Authorization: Bearer $Token" `
+        -F "nombre=$Nombre" `
+        -F "descripcion=Producto creado desde prueba automatizada" `
+        -F "categoria_id=$CategoriaId" `
+        -F "precio_unitario=990000" `
+        -F "stock_actual=3" `
+        -F "dimensiones=100 x 50 x 75 cm" `
+        -F "peso=18.5" `
+        -F "imagen=@$ImagePath;type=image/png"
+
+    $Body = Get-Content $ResponsePath -Raw
+    Remove-Item $ImagePath, $ResponsePath -Force -ErrorAction SilentlyContinue
+
+    if ([int]$Status -ne 201) {
+        throw "Crear producto devolvio HTTP ${Status}: $Body"
+    }
+    return $Body | ConvertFrom-Json
+}
+
 Write-Host "HU-07 auditoria de inventario y HU-08 devoluciones iniciado"
 
 $adminLogin = Invoke-Json -Method "POST" -Uri "$ApiUrl/login" -Body @{
@@ -98,6 +129,31 @@ $bodegaLogin = Invoke-Json -Method "POST" -Uri "$ApiUrl/login" -Body @{
     password = "123456"
 }
 if ($bodegaLogin.rol -ne 2) { throw "El usuario de bodega no tiene rol 2" }
+
+$categorias = Invoke-Json -Method "GET" -Uri "$ApiUrl/api/v1/categorias"
+$categoria = $categorias | Select-Object -First 1
+if (-not $categoria) { throw "No hay categorias para crear producto" }
+
+$productoCreado = Crear-Producto-Con-Imagen -Token $bodegaLogin.access_token -CategoriaId $categoria.id -Nombre "Producto Inventario $RunId"
+if (-not $productoCreado.imagen_url.StartsWith("/static/uploads/productos/")) { throw "El producto creado no guardo URL de imagen local" }
+if ($productoCreado.stock_actual -ne 3) { throw "El producto creado no guardo stock inicial" }
+$imagenSubida = Invoke-WebRequest -Uri "$ApiUrl$($productoCreado.imagen_url)" -UseBasicParsing
+if ($imagenSubida.StatusCode -ne 200) { throw "La imagen subida no se puede consultar desde static" }
+
+$productoPublico = Invoke-Json -Method "GET" -Uri "$ApiUrl/api/v1/productos/$($productoCreado.id)"
+if ($productoPublico.nombre -ne $productoCreado.nombre) { throw "El producto creado no aparece en catalogo publico" }
+Write-Host "OK: Producto creado desde inventario con imagen y visible en catalogo"
+
+$productoEliminado = Invoke-Json -Method "DELETE" -Uri "$ApiUrl/api/v1/inventario/productos/$($productoCreado.id)" -Token $bodegaLogin.access_token
+if ($productoEliminado.id -ne $productoCreado.id) { throw "El producto eliminado no corresponde al producto creado" }
+Expect-HttpStatus -Name "Producto eliminado oculto del catalogo publico" -ExpectedStatus 404 -Action {
+    Invoke-Json -Method "GET" -Uri "$ApiUrl/api/v1/productos/$($productoCreado.id)"
+}
+$resumenTrasEliminar = Invoke-Json -Method "GET" -Uri "$ApiUrl/api/v1/inventario/resumen" -Token $bodegaLogin.access_token
+if (($resumenTrasEliminar.productos | Where-Object { $_.id -eq $productoCreado.id }).Count -gt 0) {
+    throw "El producto eliminado sigue apareciendo en inventario activo"
+}
+Write-Host "OK: Producto eliminado logicamente y oculto de catalogo/inventario"
 
 $registroCliente = Invoke-Json -Method "POST" -Uri "$ApiUrl/registro-cliente" -Body @{
     email = "cliente_inv_dev_$RunId@neogest.local"
@@ -153,11 +209,12 @@ if ($entrada.stock_nuevo -ne ($stockInicial + 1)) { throw "La entrada no sumo st
 
 $devolucionStock = Invoke-Json -Method "POST" -Uri "$ApiUrl/api/v1/inventario/movimientos" -Token $bodegaLogin.access_token -Body @{
     producto_id = $producto.id
-    tipo = "Devolución"
+    tipo = "Devolucion"
     cantidad = 1
     observacion = "Producto retornado apto para venta"
 }
 if ($devolucionStock.stock_nuevo -ne ($stockInicial + 2)) { throw "La devolucion de inventario no sumo stock correctamente" }
+if ($devolucionStock.stock_anterior -ne ($stockInicial + 1)) { throw "La devolucion no reporto el stock anterior correcto" }
 
 Expect-HttpStatus -Name "HU-07 evita stock negativo" -ExpectedStatus 409 -Action {
     Invoke-Json -Method "POST" -Uri "$ApiUrl/api/v1/inventario/movimientos" -Token $bodegaLogin.access_token -Body @{
@@ -170,6 +227,9 @@ Expect-HttpStatus -Name "HU-07 evita stock negativo" -ExpectedStatus 409 -Action
 
 $movimientos = Invoke-Json -Method "GET" -Uri "$ApiUrl/api/v1/inventario/movimientos" -Token $bodegaLogin.access_token
 if (($movimientos | Where-Object { $_.id -eq $devolucionStock.id }).Count -eq 0) { throw "El movimiento de devolucion no aparece en auditoria" }
+$resumenInventario = Invoke-Json -Method "GET" -Uri "$ApiUrl/api/v1/inventario/resumen" -Token $bodegaLogin.access_token
+if (-not $resumenInventario.metricas) { throw "El resumen de inventario no devolvio metricas" }
+if (($resumenInventario.productos | Where-Object { $_.id -eq $producto.id }).Count -eq 0) { throw "El resumen de inventario no incluye el producto auditado" }
 Write-Host "OK: HU-07 auditoria de inventario verificada"
 
 $pedido = Crear-Pedido -Token $clienteLogin.access_token -UsuarioId $registroCliente.idUsuario -ProductoId $producto.id

@@ -3,11 +3,13 @@ from contextlib import asynccontextmanager, suppress
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.routes import auth_routes
 from app.routes import carrito_routes
 from app.routes import catalogo_routes
 from app.routes import cliente_routes
+from app.routes import dashboard_routes
 from app.routes import devolucion_routes
 from app.routes import empleado_routes
 from app.routes import envio_routes
@@ -44,8 +46,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
 app.include_router(auth_routes.router)
 app.include_router(cliente_routes.router)
+app.include_router(dashboard_routes.router)
 app.include_router(catalogo_routes.router)
 app.include_router(carrito_routes.router)
 app.include_router(empleado_routes.router)

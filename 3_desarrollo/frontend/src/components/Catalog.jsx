@@ -2,6 +2,11 @@ import { useEffect, useState } from 'react'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
 const formatPrice = (price) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(price)
+const resolveImageUrl = (url) => {
+    if (!url) return '/images/hero.png'
+    if (url.startsWith('/static/')) return `${API_URL}${url}`
+    return url
+}
 
 const Catalog = ({ searchTerm, addToCart, reloadKey = 0 }) => {
     const [products, setProducts] = useState([])
@@ -81,7 +86,7 @@ const Catalog = ({ searchTerm, addToCart, reloadKey = 0 }) => {
                     <article key={product.id} className="product-card">
                         <button onClick={() => openProductDetail(product.id)} style={{ border: 'none', background: 'transparent', width: '100%', padding: 0, cursor: 'pointer' }} aria-label={`Ver detalle de ${product.nombre}`}>
                             <div style={{ overflow: 'hidden', height: '300px' }}>
-                                <img src={product.imagen_url || '/images/hero.png'} alt={product.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} className="product-image" />
+                                <img src={resolveImageUrl(product.imagen_url)} alt={product.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} className="product-image" />
                             </div>
                         </button>
                         <div style={{ padding: '1.5rem' }}>
@@ -117,7 +122,7 @@ const Catalog = ({ searchTerm, addToCart, reloadKey = 0 }) => {
                 }}>
                     <div style={{ background: 'var(--surface)', width: 'min(920px, 100%)', borderRadius: '0.75rem', overflow: 'hidden', boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border)' }}>
                         <div className="product-detail-grid">
-                            <img src={selectedProduct.imagen_url || '/images/hero.png'} alt={selectedProduct.nombre} style={{ width: '100%', height: '100%', minHeight: '420px', objectFit: 'cover' }} />
+                            <img src={resolveImageUrl(selectedProduct.imagen_url)} alt={selectedProduct.nombre} style={{ width: '100%', height: '100%', minHeight: '420px', objectFit: 'cover' }} />
                             <div style={{ padding: '2rem', position: 'relative' }}>
                                 <button onClick={closeProductDetail} style={{ position: 'absolute', top: '1rem', right: '1rem', border: 'none', background: 'var(--surface-muted)', color: 'var(--text-strong)', borderRadius: '999px', width: 36, height: 36, cursor: 'pointer' }}>x</button>
                                 <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--primary-dark)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{selectedProduct.categoria?.nombre || 'Sin categoria'}</span>

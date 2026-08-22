@@ -1,6 +1,12 @@
 import { useEffect, useState } from 'react'
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
 const formatPrice = (price) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(price || 0)
+const resolveImageUrl = (url) => {
+    if (!url) return '/images/hero.png'
+    if (url.startsWith('/static/')) return `${API_URL}${url}`
+    return url
+}
 
 export const Footer = () => (
     <footer style={{ background: 'var(--footer-bg)', color: 'var(--footer-text)', padding: '5rem 0 2rem' }}>
@@ -56,7 +62,7 @@ export const CartDrawer = ({ isOpen, onClose, items, onRemove, onUpdateQuantity,
                 <div style={{ flex: 1, overflowY: 'auto' }}>
                     {items.map((item) => (
                         <div key={item.id} style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid #f1f5f9' }}>
-                            <img src={item.producto.imagen_url || '/images/hero.png'} alt={item.producto.nombre} style={{ width: '80px', height: '80px', borderRadius: '0.5rem', objectFit: 'cover' }} />
+                            <img src={resolveImageUrl(item.producto.imagen_url)} alt={item.producto.nombre} style={{ width: '80px', height: '80px', borderRadius: '0.5rem', objectFit: 'cover' }} />
                             <div style={{ flex: 1 }}>
                                 <h4 style={{ fontSize: '0.9rem' }}>{item.producto.nombre}</h4>
                                 <p style={{ fontWeight: 'bold' }}>{formatPrice(item.producto.precio_unitario)}</p>
@@ -105,7 +111,7 @@ const getOrderProductSummary = (order) => {
     const extraCount = Math.max(products.length - 1, 0)
 
     return {
-        imageUrl: firstProduct.imagen_url || '/images/hero.png',
+        imageUrl: resolveImageUrl(firstProduct.imagen_url),
         label: extraCount > 0 ? `${firstProduct.nombre} +${extraCount} productos` : firstProduct.nombre,
         fullLabel: names.join(', '),
     }

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Numeric, String
+from sqlalchemy import Boolean, Column, Integer, Numeric, String
 
 from app.database import Base
 
@@ -22,4 +22,5 @@ class Producto(Base):
     dimensiones = Column(String(45))
     peso = Column(Numeric(10, 2))
     imagen_url = Column(String(255))
+    activo = Column(Boolean, nullable=False, default=True)
     Categoria_idCategoria = Column(Integer, nullable=False, index=True)

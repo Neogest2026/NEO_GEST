@@ -287,9 +287,12 @@ DROP TABLE IF EXISTS `movimiento_inventario`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `movimiento_inventario` (
   `idMovimiento_inventario` int NOT NULL AUTO_INCREMENT,
-  `tipo` enum('Entrada','Salida','Ajuste') NOT NULL,
+  `tipo` varchar(20) NOT NULL,
   `cantidad` int NOT NULL,
   `fecha` datetime DEFAULT CURRENT_TIMESTAMP,
+  `observacion` varchar(255) DEFAULT NULL,
+  `stock_anterior` int DEFAULT NULL,
+  `stock_nuevo` int DEFAULT NULL,
   `Producto_idProducto` int NOT NULL,
   `Empleado_idEmpleado` int NOT NULL,
   PRIMARY KEY (`idMovimiento_inventario`),
@@ -382,6 +385,7 @@ CREATE TABLE `producto` (
   `dimensiones` varchar(45) DEFAULT NULL,
   `peso` decimal(10,2) DEFAULT NULL,
   `imagen_url` varchar(255) DEFAULT NULL,
+  `activo` tinyint(1) NOT NULL DEFAULT '1',
   `Categoria_idCategoria` int NOT NULL,
   PRIMARY KEY (`idProducto`),
   KEY `fk_Producto_Categoria` (`Categoria_idCategoria`),

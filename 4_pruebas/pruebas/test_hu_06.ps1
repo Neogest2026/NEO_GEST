@@ -199,15 +199,28 @@ Expect-HttpStatus -Name "HU-06 evita envio duplicado del mismo pedido" -Expected
 $pedidosParaEnvio = Invoke-Json -Method "GET" -Uri "$ApiUrl/api/v1/envios/pedidos" -Token $logisticaLogin.access_token
 $pendienteEnLista = $pedidosParaEnvio | Where-Object { $_.id -eq $pedidoPendiente.idPedido }
 if ($pendienteEnLista) { throw "El pedido pendiente no deberia aparecer en la lista de pedidos aptos para envio" }
+$pedidoPagadoEnLista = $pedidosParaEnvio | Where-Object { $_.id -eq $pedidoPagado.idPedido } | Select-Object -First 1
+if (-not $pedidoPagadoEnLista.productos) { throw "La lista de pedidos para envio no incluye productos" }
+if (-not $pedidoPagadoEnLista.cliente_direccion) { throw "La lista de pedidos para envio no incluye direccion del cliente" }
+if ($pedidoPagadoEnLista.items.Count -lt 1) { throw "La lista de pedidos para envio no incluye items" }
 Write-Host "OK: HU-06 lista de pedidos para envio devuelve informacion de despacho"
 
 # Listar envios
 $envios = Invoke-Json -Method "GET" -Uri "$ApiUrl/api/v1/envios" -Token $logisticaLogin.access_token
 if (($envios | Where-Object { $_.id -eq $envio.id }).Count -eq 0) { throw "El envio creado no aparece en el listado" }
+$envioListado = $envios | Where-Object { $_.id -eq $envio.id } | Select-Object -First 1
+if (-not $envioListado.productos) { throw "El envio listado no incluye productos del pedido" }
+if (-not $envioListado.cliente_direccion) { throw "El envio listado no incluye direccion del cliente" }
+
+$resumenEnvios = Invoke-Json -Method "GET" -Uri "$ApiUrl/api/v1/envios/resumen" -Token $logisticaLogin.access_token
+if (-not $resumenEnvios.metricas) { throw "El resumen de envios no devolvio metricas" }
+if (($resumenEnvios.envios | Where-Object { $_.id -eq $envio.id }).Count -eq 0) { throw "El resumen de envios no incluye el envio creado" }
+Write-Host "OK: HU-06 resumen logistico muestra metricas y envios enriquecidos"
 
 # Obtener envio por id
 $envioObtenido = Invoke-Json -Method "GET" -Uri "$ApiUrl/api/v1/envios/$($envio.id)" -Token $logisticaLogin.access_token
 if ($envioObtenido.id -ne $envio.id) { throw "No se pudo obtener el envio por id" }
+if ($envioObtenido.items.Count -lt 1) { throw "El detalle de envio no incluye items" }
 
 # Actualizar tracking (cambiar estado y empresa)
 $envioActualizado = Invoke-Json -Method "PATCH" -Uri "$ApiUrl/api/v1/envios/$($envio.id)" -Token $logisticaLogin.access_token -Body @{
@@ -223,6 +236,7 @@ $rastreo = Invoke-Json -Method "GET" -Uri "$ApiUrl/api/v1/envios/seguimiento/ped
 if (-not $rastreo.tiene_envio) { throw "El cliente no puede rastrear su pedido despachado" }
 if ($rastreo.codigo_seguimiento -ne "SEG-$RunId") { throw "El rastreo no devuelve el codigo de seguimiento" }
 if ($rastreo.estado -ne "Entregado") { throw "El rastreo no refleja el estado actualizado" }
+if ($rastreo.estado_pedido -ne "Entregado") { throw "El pedido no quedo sincronizado como Entregado" }
 Write-Host "OK: HU-06 cliente rastrea su pedido -> empresa='$($rastreo.empresa_transporte)', estado='$($rastreo.estado)'"
 
 # Cliente de otro pedido no puede rastrear

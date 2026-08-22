@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 
 from pydantic import BaseModel, Field
 
@@ -33,4 +33,11 @@ class EnvioResponse(BaseModel):
     pedido_id: int
     empleado_id: int
     cliente_nombre: Optional[str] = None
+    cliente_telefono: Optional[str] = None
+    cliente_direccion: Optional[str] = None
+    pedido_estado: Optional[str] = None
     pedido_total: Optional[float] = None
+    productos: Optional[str] = None
+    items_count: Optional[int] = None
+    empleado_nombre: Optional[str] = None
+    items: Optional[list[dict[str, Any]]] = None

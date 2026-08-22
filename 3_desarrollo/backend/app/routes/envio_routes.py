@@ -1,13 +1,15 @@
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.catalogo import Producto
 from app.models.cliente import Cliente
+from app.models.empleado import Empleado
 from app.models.envio import Envio
-from app.models.pedido import Pedido
+from app.models.pedido import DetallePedido, Pedido
 from app.models.usuario import Usuario
 from app.schemas.envio_schema import ESTADO_EN_RUTA, EnvioCreate, EnvioResponse, EnvioUpdate
 from app.security.security import get_current_user, require_roles
@@ -16,6 +18,33 @@ from app.services.empleado_context import obtener_empleado_actual
 router = APIRouter(prefix="/api/v1/envios", tags=["Envios y Tracking"])
 
 ROLES_LOGISTICA = [1, 2]
+
+
+def decimal_to_float(value):
+    return float(value or 0)
+
+
+def obtener_items_pedido(pedido_id: int, db: Session):
+    filas = (
+        db.query(DetallePedido, Producto)
+        .join(Producto, DetallePedido.Producto_idProducto == Producto.idProducto)
+        .filter(DetallePedido.Pedido_idPedido == pedido_id)
+        .all()
+    )
+    return [
+        {
+            "id": detalle.idDetalle_pedido,
+            "cantidad": detalle.cantidad,
+            "precio_al_momento": decimal_to_float(detalle.precio_al_momento),
+            "subtotal": decimal_to_float(detalle.precio_al_momento) * detalle.cantidad,
+            "producto": {
+                "id": producto.idProducto,
+                "nombre": producto.nombre,
+                "imagen_url": producto.imagen_url,
+            },
+        }
+        for detalle, producto in filas
+    ]
 
 
 def envio_response(envio: Envio, db: Session | None = None) -> dict:
@@ -38,8 +67,18 @@ def envio_response(envio: Envio, db: Session | None = None) -> dict:
         )
         if pedido_cliente:
             pedido, cliente = pedido_cliente
+            items = obtener_items_pedido(pedido.idPedido, db)
             response["cliente_nombre"] = cliente.nombre_completo
-            response["pedido_total"] = float(pedido.total_compra)
+            response["cliente_telefono"] = cliente.telefono
+            response["cliente_direccion"] = cliente.direccion_envio
+            response["pedido_estado"] = pedido.estado
+            response["pedido_total"] = decimal_to_float(pedido.total_compra)
+            response["productos"] = ", ".join(item["producto"]["nombre"] for item in items)
+            response["items_count"] = sum(item["cantidad"] for item in items)
+            response["items"] = items
+        empleado = db.query(Empleado).filter(Empleado.idEmpleado == envio.Empleado_idEmpleado).first()
+        if empleado:
+            response["empleado_nombre"] = empleado.nombre_empleado
     return response
 
 
@@ -112,11 +151,17 @@ def listar_pedidos_para_envio(
         tiene_envio = (
             db.query(Envio).filter(Envio.Pedido_idPedido == pedido.idPedido).first()
         )
+        items = obtener_items_pedido(pedido.idPedido, db)
         respuesta.append({
             "id": pedido.idPedido,
             "cliente_nombre": cliente.nombre_completo,
+            "cliente_telefono": cliente.telefono,
+            "cliente_direccion": cliente.direccion_envio,
             "total_compra": float(pedido.total_compra),
             "fecha_creacion": serialize_datetime(pedido.fecha_creacion),
+            "productos": ", ".join(item["producto"]["nombre"] for item in items),
+            "items_count": sum(item["cantidad"] for item in items),
+            "items": items,
             "ya_tiene_envio": bool(tiene_envio),
         })
     return respuesta
@@ -136,6 +181,31 @@ def listar_envios(
         consulta = consulta.filter(Envio.estado == estado)
     envios = consulta.order_by(Envio.idEnvio.desc()).all()
     return [envio_response(envio, db) for envio in envios]
+
+
+@router.get("/resumen")
+def obtener_resumen_envios(
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(require_roles(ROLES_LOGISTICA)),
+):
+    pedidos_pagados = db.query(Pedido).filter(Pedido.estado == "Pagado").all()
+    pendientes_despacho = 0
+    for pedido in pedidos_pagados:
+        tiene_envio = db.query(Envio).filter(Envio.Pedido_idPedido == pedido.idPedido).first()
+        if not tiene_envio:
+            pendientes_despacho += 1
+
+    envios = db.query(Envio).order_by(Envio.idEnvio.desc()).limit(200).all()
+    return {
+        "metricas": {
+            "total_envios": db.query(func.count(Envio.idEnvio)).scalar() or 0,
+            "pendientes_despacho": pendientes_despacho,
+            "en_ruta": db.query(func.count(Envio.idEnvio)).filter(Envio.estado == "En ruta").scalar() or 0,
+            "entregados": db.query(func.count(Envio.idEnvio)).filter(Envio.estado == "Entregado").scalar() or 0,
+            "cancelados": db.query(func.count(Envio.idEnvio)).filter(Envio.estado == "Cancelado").scalar() or 0,
+        },
+        "envios": [envio_response(envio, db) for envio in envios],
+    }
 
 
 @router.get("/{envio_id}", response_model=EnvioResponse)
@@ -173,6 +243,10 @@ def actualizar_envio(
             envio.fecha_despacho = data.fecha_despacho
         if data.fecha_entrega_estimada is not None:
             envio.fecha_entrega_estimada = data.fecha_entrega_estimada
+
+        pedido = db.query(Pedido).filter(Pedido.idPedido == envio.Pedido_idPedido).first()
+        if pedido and envio.estado == "Entregado":
+            pedido.estado = "Entregado"
 
         db.commit()
         db.refresh(envio)
